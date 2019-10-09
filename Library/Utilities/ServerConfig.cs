@@ -12,7 +12,7 @@
         /// Example of ws: websockets over http
         /// AWS (elastic beanstalk) default
         /// </remarks>
-        public static readonly string AwsAddress = "ws://apollosignaller-env.p47zti3ztv.us-east-2.elasticbeanstalk.com/";
+        public static readonly string AwsAddress = "ws://Theialens.ym3ycmfhxt.us-east-2.elasticbeanstalk.com/";
 
         /// <summary>
         /// NO LONGER ACTIVE: EXAMPLE ONLY
