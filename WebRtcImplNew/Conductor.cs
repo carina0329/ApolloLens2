@@ -312,7 +312,11 @@ namespace WebRtcImplNew
             var mediaConstraints = new MediaConstraints(mandatoryConstraints, optionalConstraints);
 
             // this will throw a very unhelpful exception if called from the UI thread
-            var videoCapturer = VideoCapturer.Create(this.selectedDevice.Name, this.selectedDevice.Id, false);
+            var videoOptions = new VideoCapturerCreationParameters();
+            videoOptions.Id = this.selectedDevice.Id;
+            videoOptions.Name = this.selectedDevice.Name;
+            videoOptions.EnableMrc = false;
+            var videoCapturer = VideoCapturer.Create(videoOptions);
 
             var options = new VideoOptions()
             {
