@@ -23,19 +23,9 @@
                 HorizontalAlignment="Center"
                 Visibility="Visible">
                 <Button
-                    x:Name="ConnectToServerButton"
+                    x:Name="SetUpCallButton"
                     VerticalAlignment="Center"
-                    Content="Connect to Server" />
-                <ComboBox
-                    x:Name="MediaDeviceComboBox"
-                    VerticalAlignment="Center"
-                    Margin="12"
-                    SelectionChanged="MediaDeviceComboBox_SelectionChanged" />
-                <ComboBox
-                    x:Name="CaptureFormatComboBox"
-                    VerticalAlignment="Center"
-                    Margin="12"
-                    SelectionChanged="CaptureFormatComboBox_SelectionChanged" />
+                    Content="Set Up Remote Call" />
             </StackPanel>
             <StackPanel
                 x:Name="Connected"
@@ -44,14 +34,14 @@
                 Orientation="Horizontal"
                 Visibility="Collapsed">
                 <Button
-                    x:Name="SourceConnectButton"
-                    Content="Connect to Source"
-                    Click="SourceConnectButton_Click"
+                    x:Name="StartCallButton"
+                    Content="Start Call"
+                    Click="StartCallButton_Click"
                     Margin="12" />
                 <Button
-                    x:Name="DisconnectFromServerButton"
+                    x:Name="HangUpCallButton"
                     Margin="12"
-                    Content="Disconnect from Server" />
+                    Content="Hang Up Call" />
                 <Button
                     x:Name="SayHiButton"
                     Margin="12"

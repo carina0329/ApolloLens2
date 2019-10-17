@@ -45,14 +45,14 @@ namespace ApolloLensAudio
         {
             var signaller = new WebsocketSignaller();
 
-            this.ConnectToServerButton.Click += async (s, a) =>
+            this.SetUpCallButton.Click += async (s, a) =>
             {
                 this.NotConnected.Hide();
                 await signaller.ConnectToServer(ServerConfig.AwsAddress);
                 this.Connected.Show();
             };
 
-            this.DisconnectFromServerButton.Click += (s, a) =>
+            this.HangUpCallButton.Click += (s, a) =>
             {
                 this.Connected.Hide();
                 signaller.DisconnectFromServer();
@@ -88,43 +88,21 @@ namespace ApolloLensAudio
                 Logger.Log(message);
             };
 
-            var devices = await this.conductor.GetVideoDevices();
-            this.MediaDeviceComboBox.ItemsSource = devices;
-            this.MediaDeviceComboBox.SelectedIndex = 0;
-
-            this.CaptureFormatComboBox.ItemsSource =
-                await this.conductor.GetCaptureProfiles(devices.First());
-            this.CaptureFormatComboBox.SelectedIndex = 0;
         }
 
         #region UI_Handlers
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
-            var message = "Hello, World!";
+            var message = "Hi, I'm ready to call!";
             await this.conductor.UISignaller.SendPlain(message);
-            Logger.Log($"Send message: {message} to connected peers");
-        }
-
-        private void CaptureFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var selectedProfile = (this.CaptureFormatComboBox.SelectedItem as CaptureProfile);
-            this.conductor.SetSelectedProfile(selectedProfile);
+            Logger.Log($"Send message: {message} to connected peer");
         }
 
         #endregion
 
-        private async void MediaDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var mediaDevice = (this.MediaDeviceComboBox.SelectedItem as VideoDevice);
-            this.conductor.SetSelectedMediaDevice(mediaDevice);
 
-            this.CaptureFormatComboBox.ItemsSource =
-                await this.conductor.GetCaptureProfiles(mediaDevice);
-            this.CaptureFormatComboBox.SelectedIndex = 0;
-        }
-
-        private async void SourceConnectButton_Click(object sender, RoutedEventArgs e)
+        private async void StartCallButton_Click(object sender, RoutedEventArgs e)
         {
             Logger.Log("Starting connection to source...");
             await this.conductor.StartCall();
