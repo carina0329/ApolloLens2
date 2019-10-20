@@ -122,7 +122,9 @@ namespace ApolloLensVitals
                 //this.ipHost = Dns.GetHostEntry("localhost");
                 //this.ipAddr = this.ipHost.AddressList[0];
                 // this.ipAddr = new IPAddress(Encoding.ASCII.GetBytes("127.0.0.1"));
-                this.ipAddr = IPAddress.Loopback;
+                //  this.ipAddr = IPAddress.Loopback;
+                this.ipAddr = IPAddress.Parse("3.19.244.10");
+           //     this.ipAddr = new IPAddress(51639306);//  3.19.244.10
                 this.localEndPoint = new IPEndPoint(this.ipAddr, 10000);
 
                 // create socket
