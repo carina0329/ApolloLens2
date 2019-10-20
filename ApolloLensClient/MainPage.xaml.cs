@@ -68,7 +68,9 @@ namespace ApolloLensClient
             var opts = new MediaOptions(
                 new MediaOptions.Init()
                 {
-                    ReceiveVideo = true
+                    ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
+                    ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
+                    SendAudio = (bool)this.SendAudioCheck.IsChecked
                 });
             this.conductor.SetMediaOptions(opts);
 
