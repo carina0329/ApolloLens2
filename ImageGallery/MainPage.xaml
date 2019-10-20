@@ -1,0 +1,113 @@
+﻿<Page
+    x:Class="ScanGallery.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ScanGallery"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    x:Name="Page">
+    <Page.Resources>
+        <SolidColorBrush
+            x:Key="TextColor"
+            Color="#FF00D1FF" />
+        <SolidColorBrush
+            x:Key="SelectedColor"
+            Color="#FF3300" />
+    </Page.Resources>
+    <Grid>
+        <Grid
+            x:Name="LoadingScreen"
+            Visibility="Visible">
+            <StackPanel
+                x:Name="LoadSettings"
+                Visibility="Visible"
+                Orientation="Horizontal"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="Server Address: "
+                    Margin="12" />
+                <TextBox
+                    x:Name="ServerAddressBox"
+                    Text="{Binding ServerAddress, Mode=OneWay}"
+                    VerticalAlignment="Center"
+                    Margin="12"
+                    SelectionChanged="ServerAddressBox_SelectionChanged"
+                    Width="120" />
+                <Button
+                    x:Name="LoadStudy"
+                    Click="LoadStudy_Click"
+                    VerticalAlignment="Center"
+                    Content="Load Study From Server"
+                    Margin="12" />
+                <Button
+                    x:Name="LoadStudyLocal"
+                    Click="LoadStudyLocal_Click"
+                    VerticalAlignment="Center"
+                    Content="Load Study from Local"
+                    Margin="12" />
+            </StackPanel>
+            <StackPanel
+                x:Name="LoadBarPanel"
+                Visibility="Collapsed"
+                Orientation="Horizontal"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="Loading Images..." />
+                <ProgressBar
+                    x:Name="LoadingBar"
+                    Value="0"
+                    Width="588"
+                    VerticalAlignment="Center"
+                    Margin="24" />
+            </StackPanel>
+        </Grid>
+        <Grid
+            x:Name="RunningScreen"
+            Visibility="Collapsed">
+            <Grid.Background>
+                <ImageBrush
+                    x:Name="Image"
+                    Stretch="Uniform"
+                    ImageSource="{Binding SoftwareBitmapSource, Mode=OneWay}" />
+            </Grid.Background>
+            <Button
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="24"
+                Content="Settings"
+                Foreground="{StaticResource TextColor}">
+                <Button.Flyout>
+                    <Flyout>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <ComboBox
+                                x:Name="StretchSelect"
+                                Grid.Row="3"
+                                Grid.ColumnSpan="2"
+                                VerticalAlignment="Top"
+                                HorizontalAlignment="Stretch"
+                                Margin="0 12 0 0"
+                                SelectionChanged="StretchSelect_SelectionChanged"
+                                ItemsSource="{Binding Stretches, Mode=OneTime}" />
+                        </Grid>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+        </Grid>
+    </Grid>
+</Page>

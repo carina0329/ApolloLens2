@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media.Imaging;
 
 namespace ApolloLensLibrary.Imaging
@@ -24,6 +26,7 @@ namespace ApolloLensLibrary.Imaging
     /// </remarks>
     public class ImageLibrary
     {
+        public SoftwareBitmap softbitmap { get; set; }
         #region Events
 
         public event EventHandler<int> ReadyToLoad;
@@ -48,22 +51,22 @@ namespace ApolloLensLibrary.Imaging
         /// from the resulting collection.
         /// </summary>
         /// <returns></returns>
-        public async Task<IImageCollection> GetStudyAsCollection()
+        public async Task<SoftwareBitmap> GetStudyAsCollection()
         {
             var raw = await this.GetStudyRaw();
+            return raw;
+            //var result = ImageCollection.Create();
 
-            var result = ImageCollection.Create();
+            //foreach (var series in raw.Keys)
+            //{
+            //    result.CreateSeries(series, raw[series].Count());
+            //    foreach (var im in raw[series])
+            //    {
+            //        result.AddImageToSeries(im);
+            //    }
+            //}
 
-            foreach (var series in raw.Keys)
-            {
-                result.CreateSeries(series, raw[series].Count());
-                foreach (var im in raw[series])
-                {
-                    result.AddImageToSeries(im);
-                }
-            }
-
-            return result;
+            //return result;
         }
 
         /// <summary>
@@ -72,51 +75,62 @@ namespace ApolloLensLibrary.Imaging
         /// memory.
         /// </summary>
         /// <returns></returns>
-        public async Task<IDictionary<string, IEnumerable<ImageTransferObject>>> GetStudyRaw()
+        public async Task<SoftwareBitmap> GetStudyRaw()
         {
             // prompt user for directory
             var file = await this.GetImageFile();
-
-            // TODO: add error checking?
-            BitmapImage bimg = new BitmapImage();
-            MemoryStream stream = (MemoryStream)await file.OpenAsync(FileAccessMode.Read);
-            bimg.SetSource(stream.AsRandomAccessStream());
-            byte[] byteArray = stream.ToArray();
-            var collection = new List<ImageTransferObject>();
-            var image = new ImageTransferObject()
-            {
-                Image = byteArray,
-                Width = bimg.PixelWidth,
-                Height = bimg.PixelHeight,
-                Position = 0,
-                Series = ""
-            };
-            collection.Add(image);
+            FileRandomAccessStream fstream = (FileRandomAccessStream)await file.OpenAsync(FileAccessMode.Read);
+            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(fstream);
+            softbitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+            return softbitmap;
+            //var inputstream = await file.OpenSequentialReadAsync();
+            //    var readStream = inputstream.AsStreamForRead();
+            //    var byteArray = new byte[readStream.Length];
+            //    await readStream.ReadAsync(byteArray, 0, byteArray.Length);
+            //// TODO: add error checking?
+            //BitmapImage bimg = new BitmapImage();
+            //FileRandomAccessStream stream = (FileRandomAccessStream)await file.OpenAsync(FileAccessMode.Read);
+            //bimg.SetSource(stream);
+            //////MemoryStream memstream = new MemoryStream();
+            //////bimg.Save(memstream, bimg.RawFormat);
+            //////byte[] byteArray = memstream.ToArray();
+            ////byte[] byteArray = new byte[stream.Size];
+            ////await stream.ReadAsync(byteArray, 0, byteArray.Length);
+            //var collection = new List<ImageTransferObject>();
+            //var image = new ImageTransferObject()
+            //{
+            //    Image = byteArray,
+            //    Width = bimg.PixelWidth,
+            //    Height = bimg.PixelHeight,
+            //    Position = 0,
+            //    Series = "series"
+            //};
+            //collection.Add(image);
             this.OnLoadedImage();
 
             // clean up collection, transform List<ImageTransferObject> into
             // IDictionary<string, IEnumerable<ImageTransferObject>>.
             // Also clean up the position field of each ImageTransferObject
             // to reflect the image's actual location in the list.
-            var res = collection
-                .GroupBy(transfer => transfer.Series)
-                .ToDictionary(
-                    grp => grp.Key,
-                    grp =>
-                    {
-                        var ordered = grp
-                            .OrderBy(transfer => transfer.Position);
+            //var res = collection
+            //    .GroupBy(transfer => transfer.Series)
+            //    .ToDictionary(
+            //        grp => grp.Key,
+            //        grp =>
+            //        {
+            //            var ordered = grp
+            //                .OrderBy(transfer => transfer.Position);
 
-                        foreach (var it in ordered
-                            .Select((t, i) => new { value = t, idx = i }))
-                        {
-                            it.value.Position = it.idx;
-                        }
+            //            foreach (var it in ordered
+            //                .Select((t, i) => new { value = t, idx = i }))
+            //            {
+            //                it.value.Position = it.idx;
+            //            }
 
-                        return ordered.AsEnumerable();
-                    });
+            //            return ordered.AsEnumerable();
+            //        });
 
-            return res;
+            //return res;
         }
 
         #endregion
