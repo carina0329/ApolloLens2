@@ -108,6 +108,14 @@ namespace ApolloLensClient
             if (!isConnectedToSource)
             {
                 Logger.Log("Starting connection to source...");
+                var opts = new MediaOptions(
+                new MediaOptions.Init()
+                {
+                    ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
+                    ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
+                    SendAudio = (bool)this.SendAudioCheck.IsChecked
+                });
+                this.conductor.SetMediaOptions(opts);
                 await this.conductor.StartCall();
                 Logger.Log("Connection started...");
                 signaller.DisconnectFromServer();
