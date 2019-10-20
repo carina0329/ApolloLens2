@@ -20,7 +20,7 @@ class ApolloLensVitalsSource(object):
         """Initializes socket and binds to appropriate IP/port."""
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.port = port
-        self.addr = ('localhost', port)
+        self.addr = ("0.0.0.0", port)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(self.addr)
 
