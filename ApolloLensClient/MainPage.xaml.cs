@@ -18,6 +18,9 @@ namespace ApolloLensClient
     public sealed partial class MainPage : Page
     {
         private IConductor conductor { get; } = Conductor.Instance;
+        private Boolean isConnectedToSource = false;
+        private WebsocketSignaller signaller = null;
+        private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
 
         public MainPage()
         {
@@ -43,12 +46,13 @@ namespace ApolloLensClient
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            var signaller = new WebsocketSignaller();
+            signaller = new WebsocketSignaller();
 
             this.ServerConnectButton.Click += async (s, a) =>
             {
                 this.StartupSettings.Hide();
                 await signaller.ConnectToServer(ServerConfig.AwsAddress);
+                isConnectedToSource = false;
                 this.ConnectedOptions.Show();
             };
 
@@ -84,16 +88,53 @@ namespace ApolloLensClient
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
+            if (isProcessing) return;
+            isProcessing = true;
+
             var message = "Hello, World!";
             await this.conductor.UISignaller.SendPlain(message);
             Logger.Log($"Sent {message} to any connected peers");
+
+            isProcessing = false;
         }
 
         private async void SourceConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            Logger.Log("Starting connection to source...");
-            await this.conductor.StartCall();
-            Logger.Log("Connection started...");
+            if (isProcessing) return;
+            isProcessing = true;
+
+            if (!isConnectedToSource)
+            {
+                Logger.Log("Starting connection to source...");
+                await this.conductor.StartCall();
+                Logger.Log("Connection started...");
+                signaller.DisconnectFromServer();
+                this.SayHiButton.Hide();
+            } else
+            {
+                Logger.Log("Disconnecting from source...");
+                await this.conductor.Shutdown();
+                Logger.Log("Connection ended...");
+                this.SayHiButton.Show();
+                this.ConnectedOptions.Hide();
+                this.StartupSettings.Show();
+            }
+            isConnectedToSource = !isConnectedToSource;
+            //this.SourceConnectButton.Content = (isConnectedToSource ? "Connect to Source" : "Disconnect from Source");
+            // ^-- this doesn't work but the general logic is that the button should show "Disconnect" or "Connect" depending on its state
+
+            // Temporary workaround: two buttons!
+            if (isConnectedToSource)
+            {
+                this.SourceConnectButton.Hide();
+                this.SourceDisconnectButton.Show();
+            } else
+            {
+                this.SourceDisconnectButton.Hide();
+                this.SourceConnectButton.Show();
+            }
+
+            isProcessing = false;
         }
 
         #endregion

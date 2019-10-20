@@ -41,6 +41,12 @@
                     Click="SourceConnectButton_Click"
                     Margin="12" />
                 <Button
+                    x:Name="SourceDisconnectButton"
+                    Content="Disconnect from Source"
+                    Click="SourceConnectButton_Click"
+                    Visibility="Collapsed"
+                    Margin="12" />
+                <Button
                     x:Name="SayHiButton"
                     Click="SayHiButton_Click"
                     Content="Say Hi"
