@@ -38,8 +38,8 @@
                 <SolidColorBrush Color="White" Opacity="0.5"/>
             </Button.Background>
         </Button>
-        <TextBlock x:Name="BloodPressureText" Text="bp_test" HorizontalAlignment="Left" Margin="323,257,0,0" FontSize="50" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI" FontWeight="Normal" Width="277" SelectionChanged="textBlock_SelectionChanged" Foreground="White"/>
-        <TextBlock x:Name="HeartRateText" Text="heartrate_test" HorizontalAlignment="Left" Margin="259,110,0,0" FontSize="50" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI" FontWeight="Normal" Width="467" SelectionChanged="textBlock_SelectionChanged" Foreground="White"/>
-        <TextBlock x:Name="RespirationRateText" Text="respirationrate_test" HorizontalAlignment="Left" Margin="345,556,0,0" FontSize="50" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI" FontWeight="Normal" Width="514" SelectionChanged="textBlock_SelectionChanged" Foreground="White"/>
+        <TextBlock x:Name="BloodPressureText" Text="bp_test" HorizontalAlignment="Left" Margin="323,257,0,0" FontSize="50" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI" FontWeight="Normal" Width="634" SelectionChanged="textBlock_SelectionChanged" Foreground="White"/>
+        <TextBlock x:Name="HeartRateText" Text="heartrate_test" HorizontalAlignment="Left" Margin="259,110,0,0" FontSize="50" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI" FontWeight="Normal" Width="821" SelectionChanged="textBlock_SelectionChanged" Foreground="White"/>
+        <TextBlock x:Name="RespirationRateText" Text="respirationrate_test" HorizontalAlignment="Left" Margin="345,556,0,0" FontSize="50" TextWrapping="Wrap" VerticalAlignment="Top" FontFamily="Segoe UI" FontWeight="Normal" Width="690" SelectionChanged="textBlock_SelectionChanged" Foreground="White"/>
     </Grid>
 </Page>

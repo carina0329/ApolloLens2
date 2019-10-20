@@ -119,9 +119,9 @@ namespace ApolloLensVitals
             
             await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
-                this.BloodPressureText.Text = p2.blood_pressure_systolic + " | " + p2.blood_pressure_diastolic;
-                this.HeartRateText.Text = p2.heart_rate;
-                this.RespirationRateText.Text = p2.respiration_rate;
+                this.BloodPressureText.Text = p2.blood_pressure_systolic + " | " + p2.blood_pressure_diastolic + " mmHg";
+                this.HeartRateText.Text = p2.heart_rate + " bpm";
+                this.RespirationRateText.Text = p2.respiration_rate + " bpm";
                 //System.Diagnostics.Debug.WriteLine(bp);
 
 
