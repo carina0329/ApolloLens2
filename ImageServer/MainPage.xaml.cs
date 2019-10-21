@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using Windows.Storage.Streams;
 using ApolloLensLibrary.Utilities;
 using Windows.UI.Core;
+using Windows.Graphics.Imaging;
 
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -35,8 +36,8 @@ namespace ScanServer
             this.InitializeComponent();
         }
 
-        IDictionary<string, IEnumerable<ImageTransferObject>> images;
-        DicomNetworking dicomSender;
+        SoftwareBitmap images;
+        ImageNetworking imageSender;
         StreamSocketListener server;
 
         private async void Load_Click(object sender, RoutedEventArgs e)
@@ -52,8 +53,8 @@ namespace ScanServer
             this.server = new StreamSocketListener();
             this.server.ConnectionReceived += this.Server_ConnectionReceived;
 
-            this.dicomSender = new DicomNetworking();
-            this.dicomSender.SentImage += this.Sender_SentImage;
+            this.imageSender = new ImageNetworking();
+            this.imageSender.SentImage += this.Sender_SentImage;
 
             await this.server.BindServiceNameAsync("8080");
         }
@@ -79,7 +80,7 @@ namespace ScanServer
 
                 try
                 {
-                    await this.dicomSender.SendStudyAsync(this.images, args.Socket.OutputStream);
+                    await this.imageSender.SendStudyAsync(this.images, args.Socket.OutputStream);
                 }
                 finally
                 {
