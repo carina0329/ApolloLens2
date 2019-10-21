@@ -1,12 +1,21 @@
-"""TCP/IP based server that transmits vitals to connected clients.
-For now, the generated values are random. In the future, this will be sourced
-by the vitals machine.
+"""
+server.py
+============
+Dr. HoloLens
+============
+Jimil Patel <pateljim@umich.edu>
+David Nie <dnie@umich.edu>
+Laura McCallum <laumccal@umich.edu>
+Dylan McCallister <djmcalli@umich.edu>
+
+Websocket based server.
+Captures vitals from the machines and transmits to HoloLens.
 
 TODO: use real vitals values
-TODO: use asymmetric => symmetric encryption process
-TODO: implement verify_client
+TODO: encryption process (implement verify_client, symmetric encryption?)
 TODO: determine appropriate buffer size and authentication process
 """
+
 import socket
 import random
 import time
