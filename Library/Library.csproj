@@ -135,6 +135,7 @@
     <Compile Include="Imaging\DicomParser.cs" />
     <Compile Include="Imaging\ImageCharacteristics.cs" />
     <Compile Include="Imaging\ImageCollection.cs" />
+    <Compile Include="Imaging\ImageNetworking.cs" />
     <Compile Include="Imaging\ImageTransferObject.cs" />
     <Compile Include="Imaging\SmartBitmap.cs" />
     <Compile Include="Signalling\IBasicSignaller.cs" />
