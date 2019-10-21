@@ -115,7 +115,7 @@ namespace ApolloLensAudio
             Logger.Log("Starting connection to source...");
             await this.conductor.StartCall();
             Logger.Log("Connection started...");
-            signaller.DisconnectFromServer();
+            //signaller.DisconnectFromServer();
         }
     }
 }
