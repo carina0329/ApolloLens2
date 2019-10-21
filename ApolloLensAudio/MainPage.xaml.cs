@@ -20,6 +20,8 @@ namespace ApolloLensAudio
     {
         private IConductor conductor { get; } = Conductor.Instance;
 
+        private WebsocketSignaller signaller = null;
+
         public MainPage()
         {
             this.DataContext = this;
@@ -43,20 +45,26 @@ namespace ApolloLensAudio
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            var signaller = new WebsocketSignaller();
+            signaller = new WebsocketSignaller();
 
             this.SetUpCallButton.Click += async (s, a) =>
             {
                 this.NotConnected.Hide();
-                await signaller.ConnectToServer(ServerConfig.AwsAddress);
+                await signaller.ConnectToServer("ws://drhololens-env.esncizasfm.us-east-2.elasticbeanstalk.com/");
                 this.Connected.Show();
             };
 
             this.HangUpCallButton.Click += (s, a) =>
             {
                 this.Connected.Hide();
-                signaller.DisconnectFromServer();
+                this.conductor.Shutdown();
                 this.NotConnected.Show();
+            };
+
+            this.DisconnectFromServerButton.Click += (s, a) =>
+            {
+                Logger.Log("Disconnected from server");
+                signaller.DisconnectFromServer();
             };
 
             var config = new ConductorConfig()
@@ -107,6 +115,7 @@ namespace ApolloLensAudio
             Logger.Log("Starting connection to source...");
             await this.conductor.StartCall();
             Logger.Log("Connection started...");
+            signaller.DisconnectFromServer();
         }
     }
 }

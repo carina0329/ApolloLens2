@@ -47,6 +47,10 @@
                     Margin="12"
                     Click="SayHiButton_Click"
                     Content="Say Hi" />
+                <Button
+                    x:Name="DisconnectFromServerButton"
+                    Margin="12"
+                    Content="Disconnect from Server" />
             </StackPanel>
         </Grid>
         <TextBox
