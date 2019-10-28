@@ -14,8 +14,11 @@ Captures vitals from the machines and transmits to HoloLens.
 TODO: use real vitals values
 TODO: encryption process (implement verify_client, symmetric encryption?)
 TODO: determine appropriate buffer size and authentication process
+TODO: add a GUI for easy setup
 """
 
+import websockets
+import asyncio
 import socket
 import random
 import time
@@ -23,24 +26,34 @@ import json
 import sys
 
 class ApolloLensVitalsSource(object):
-    """Represents Vitals Source Server."""
+    """Encapsulates ApolloLens Vitals Server."""
 
     def __init__(self, port):
-        """Initializes socket and binds to appropriate IP/port."""
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        """Creates connection parameters."""
+        self.ip = "0.0.0.0"
         self.port = port
-        self.addr = ("0.0.0.0", port)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind(self.addr)
 
     def run(self):
-        """Run server."""
-        try:
-            self.listen()
-        except BrokenPipeError:
-            self.listen()
-        except Exception as e:
-            print(e)
+        """Runs server."""
+        # try:
+        # self.server = websockets.serve(handler, self.ip, self.port)
+        asyncio.get_event_loop().run_until_complete(
+            websockets.serve(self.handler, self.ip, self.port)
+        )
+        asyncio.get_event_loop().run_forever()
+        # except 
+
+
+        # try:
+        #     self.listen()
+        # except BrokenPipeError:
+        #     self.listen()
+        # except Exception as e:
+        #     print(e)
+
+    async def handler(self, path, what):
+        print('heloo')
+        pass
 
 
     def listen(self):
@@ -81,5 +94,5 @@ class ApolloLensVitalsSource(object):
 
 
 if __name__ == "__main__":
-    source = ApolloLensVitalsSource(10000)
+    source = ApolloLensVitalsSource(port=10000)
     source.run()
