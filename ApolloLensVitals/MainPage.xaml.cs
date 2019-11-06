@@ -79,7 +79,9 @@ namespace ApolloLensVitals
 
         }
 
-        private VitalsConnect vitals;
+        //private VitalsConnect vitals;
+        private VitalsListener vitals;
+        private VitalsConnect vitalsOld;
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
@@ -93,10 +95,13 @@ namespace ApolloLensVitals
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            System.Diagnostics.Debug.WriteLine("Start");
-            this.vitals = new VitalsConnect(ChangeText);
+            System.Diagnostics.Debug.WriteLine("ApolloLensVitals booted.");
+            //this.vitalsOld = new VitalsConnect(ChangeText);
+            //this.vitalsOld.Run();
+            this.vitals = new VitalsListener();
             this.vitals.Run();
-            System.Diagnostics.Debug.WriteLine("Made it past run call.");
+            //ProgramX x = new ProgramX();
+
         }
 
         public delegate void ChangeTextDelegate(string bp);
