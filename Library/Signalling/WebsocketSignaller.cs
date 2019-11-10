@@ -22,15 +22,15 @@ namespace ApolloLensLibrary.Signalling
         public event EventHandler ConnectionEnded;
         public event EventHandler<string> ReceivedMessage;
         public bool connected { get; set; } = false;
-        public string connectionId { get; set; }
+        public string identity { get; set; }
 
         /// <summary>
         /// Constructor. Defines connection identity.
         /// </summary>
-        /// <param name="connectionId">"client" or "source"</param>
-        public WebsocketSignaller(string connectionId)
+        /// <param name="identity">"client" or "source"</param>
+        public WebsocketSignaller(string connectionIdentity)
         {
-            this.connectionId = connectionId;
+            this.identity = connectionIdentity;
             this.ConnectionSucceeded += WebsocketSignaller_ConnectionSucceeded;
         }
 
@@ -91,7 +91,7 @@ namespace ApolloLensLibrary.Signalling
         private async void WebsocketSignaller_ConnectionSucceeded(object sender, EventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("Connection Succeeded.");
-            await this.SendMessage(this.connectionId);
+            await this.SendMessage(this.identity);
         }
 
 

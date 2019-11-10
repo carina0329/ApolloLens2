@@ -81,7 +81,8 @@ namespace ApolloLensClient
             {
                 CoreDispatcher = this.Dispatcher,
                 RemoteVideo = this.RemoteVideo,
-                Signaller = signaller
+                Signaller = signaller,
+                Identity = "client"
             };
 
             await this.conductor.Initialize(config);

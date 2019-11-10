@@ -150,12 +150,17 @@ namespace ApolloLensLibrary.WebRtc
     /// <summary>
     /// Configuration object for initializing an
     /// IConductor. Contains dependencies for
-    /// injection. Core dispatcher is always
+    /// injection. Core dispatcher and Identity is always
     /// required. The others may be left null
     /// depending on the IConductor's media options
     /// </summary>
     public class ConductorConfig
     {
+        /// <summary>
+        /// Conductor identity. "source" or "client".
+        /// </summary>
+        public string Identity { get; set; }
+
         /// <summary>
         /// The UI.Xaml element to render remote video to
         /// </summary>

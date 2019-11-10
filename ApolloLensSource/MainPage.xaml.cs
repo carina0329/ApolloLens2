@@ -68,7 +68,8 @@ namespace ApolloLensSource
             var config = new ConductorConfig()
             {
                 CoreDispatcher = this.Dispatcher,
-                Signaller = signaller
+                Signaller = signaller,
+                Identity = "source"
             };
 
             Logger.Log("Initializing WebRTC...");

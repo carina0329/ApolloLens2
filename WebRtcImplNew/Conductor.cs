@@ -38,6 +38,7 @@ namespace WebRtcImplNew
         private IWebRtcFactory webRtcFactory { get; set; }
 
         private List<RTCPeerConnection> peerConnections { get; set; }
+        private string identity { get; set; }
         private RTCPeerConnection peerConnection { get; set; }
 
         private CoreDispatcher coreDispatcher { get; set; }
@@ -111,6 +112,8 @@ namespace WebRtcImplNew
         {
             if (config == null)
                 throw new ArgumentException("Config cannot be null");
+
+            this.identity = config.Identity;
 
             this.coreDispatcher =
                 config.CoreDispatcher ?? throw new ArgumentException(
