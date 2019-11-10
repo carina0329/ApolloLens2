@@ -5,7 +5,7 @@ using Windows.Data.Json;
 namespace ApolloLensLibrary.Signalling
 {
     /// <summary>
-    /// Wraps and unwrpas messages in JSON format, using an
+    /// Wraps and unwraps messages in JSON format, using an
     /// enumeration as a message type signifier.
     /// Allows messages to be distinguish by an enum instead
     /// of a raw string.

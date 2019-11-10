@@ -46,14 +46,35 @@ namespace ApolloLensClient
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            signaller = new WebsocketSignaller();
+            signaller = new WebsocketSignaller("client");
+
+            // Not implemented for source, but necessary here.
+            // EX: signaller connection void before source<=>client connection made.
+            // This could happen if the source was disconnected before direct connection.
+            signaller.ConnectionEnded += async (s, a) =>
+            {
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                {
+                    if (!isConnectedToSource)
+                    {
+                        this.ConnectedOptions.Hide();
+                        this.StartupSettings.Show();
+                    }
+                });
+            };
+
+            signaller.ConnectionFailed += (s, a) =>
+            {
+                this.ConnectedOptions.Hide();
+                this.StartupSettings.Show();
+            };
 
             this.ServerConnectButton.Click += async (s, a) =>
             {
                 this.StartupSettings.Hide();
                 await signaller.ConnectToServer(ServerConfig.AwsAddress);
                 isConnectedToSource = false;
-                this.ConnectedOptions.Show();
+                if (signaller.connected) this.ConnectedOptions.Show();
             };
 
             var config = new ConductorConfig()
@@ -83,6 +104,12 @@ namespace ApolloLensClient
             {
                 Logger.Log(message);
             };
+
+            this.conductor.CallStarted += async (s, a) =>
+            {
+                await System.Threading.Tasks.Task.Delay(10000);
+                this.signaller.DisconnectFromServer();
+            };
         }
 
 
@@ -101,7 +128,7 @@ namespace ApolloLensClient
         }
 
         private async void SourceConnectButton_Click(object sender, RoutedEventArgs e)
-        {
+        {            
             if (isProcessing) return;
             isProcessing = true;
 
@@ -118,7 +145,7 @@ namespace ApolloLensClient
                 this.conductor.SetMediaOptions(opts);
                 await this.conductor.StartCall();
                 Logger.Log("Connection started...");
-                signaller.DisconnectFromServer();
+                //signaller.DisconnectFromServer(); Because of async calls, this disconnects too early.
                 this.SayHiButton.Hide();
             } else
             {

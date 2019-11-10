@@ -14,8 +14,25 @@ namespace ApolloLensLibrary.Signalling
     {
         private MessageWebSocket WebSocket { get; set; }
 
+        public event EventHandler ConnectionSucceeded;
         public event EventHandler ConnectionFailed;
+        /// <summary>
+        /// Intended as a UI-handler for connections ended unexpectedly.
+        /// </summary>
+        public event EventHandler ConnectionEnded;
         public event EventHandler<string> ReceivedMessage;
+        public bool connected { get; set; } = false;
+        public string connectionId { get; set; }
+
+        /// <summary>
+        /// Constructor. Defines connection identity.
+        /// </summary>
+        /// <param name="connectionId">"client" or "source"</param>
+        public WebsocketSignaller(string connectionId)
+        {
+            this.connectionId = connectionId;
+            this.ConnectionSucceeded += WebsocketSignaller_ConnectionSucceeded;
+        }
 
         /// <summary>
         /// Connect to the server at the specified address.
@@ -32,16 +49,20 @@ namespace ApolloLensLibrary.Signalling
                 this.WebSocket.Control.MessageType = SocketMessageType.Utf8;
                 this.WebSocket.MessageReceived += this.WebSocket_MessageReceived;
                 this.WebSocket.Closed += this.WebSocket_Closed;
+                this.connected = true;
                 await this.WebSocket.ConnectAsync(new Uri(address));
+                this.ConnectionSucceeded?.Invoke(this, EventArgs.Empty);
             }
             catch
             {
+                this.connected = false;
                 this.ConnectionFailed?.Invoke(this, EventArgs.Empty);
             }
         }
 
         public void DisconnectFromServer()
         {
+            this.connected = false;
             this.WebSocket.Close(1000, "");
         }
 
@@ -62,6 +83,16 @@ namespace ApolloLensLibrary.Signalling
             }
         }
 
+        /// <summary>
+        /// Registers identity with signaller on success.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void WebsocketSignaller_ConnectionSucceeded(object sender, EventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("Connection Succeeded.");
+            await this.SendMessage(this.connectionId);
+        }
 
 
         private void WebSocket_MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
@@ -88,8 +119,10 @@ namespace ApolloLensLibrary.Signalling
 
         private void WebSocket_Closed(IWebSocket sender, WebSocketClosedEventArgs args)
         {
+            this.connected = false;
             this.WebSocket.Dispose();
             this.WebSocket = null;
+            this.ConnectionEnded?.Invoke(this, EventArgs.Empty);
         }
     }
 }

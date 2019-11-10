@@ -37,6 +37,7 @@ namespace WebRtcImplNew
 
         private IWebRtcFactory webRtcFactory { get; set; }
 
+        private List<RTCPeerConnection> peerConnections { get; set; }
         private RTCPeerConnection peerConnection { get; set; }
 
         private CoreDispatcher coreDispatcher { get; set; }
@@ -46,6 +47,8 @@ namespace WebRtcImplNew
         private MediaElement localVideo { get; set; }
 
         #endregion
+
+        public EventHandler CallStarted { get; set; }
 
         #region Interface
 
@@ -107,7 +110,7 @@ namespace WebRtcImplNew
         public async Task Initialize(ConductorConfig config)
         {
             if (config == null)
-                throw new ArgumentException("Config cannon be null");
+                throw new ArgumentException("Config cannot be null");
 
             this.coreDispatcher =
                 config.CoreDispatcher ?? throw new ArgumentException(
@@ -226,6 +229,7 @@ namespace WebRtcImplNew
         {
             return await Task.Run(() =>
             {
+
                 var factory = new WebRtcFactory(new WebRtcFactoryConfiguration());
 
                 var peerConnection = new RTCPeerConnection(
@@ -354,6 +358,7 @@ namespace WebRtcImplNew
         private async void signaller_ReceivedIceCandidate(object sender, RTCIceCandidate candidate)
         {
             await this.peerConnection.AddIceCandidate(candidate);
+            this.CallStarted?.Invoke(this, EventArgs.Empty);
         }
 
         private async void signaller_ReceivedOffer(object sender, RTCSessionDescription offer)

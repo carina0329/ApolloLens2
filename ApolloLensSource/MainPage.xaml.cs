@@ -43,13 +43,19 @@ namespace ApolloLensSource
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            var signaller = new WebsocketSignaller();
+            var signaller = new WebsocketSignaller("source");
+
+            signaller.ConnectionFailed += (s, a) =>
+            {
+                this.Connected.Hide();
+                this.NotConnected.Show();
+            };
 
             this.ConnectToServerButton.Click += async (s, a) =>
             {
-                this.NotConnected.Hide();
+                this.NotConnected.Hide();        
                 await signaller.ConnectToServer(ServerConfig.AwsAddress);
-                this.Connected.Show();
+                if (signaller.connected) this.Connected.Show();
             };
 
             this.DisconnectFromServerButton.Click += (s, a) =>
