@@ -249,12 +249,18 @@ namespace WebRtcImplNew
 
                 if ((mediaOptions.SendVideo || mediaOptions.LocalLoopback) && this.localVideoTrack == null)
                 {
-                    this.localVideoTrack = this.getLocalVideo(factory);
+                    if (mediaOptions.SendVideo || mediaOptions.LocalLoopback)
+                    {
+                        this.localVideoTrack = this.getLocalVideo(factory);
+                    }
                 }
 
                 if (mediaOptions.SendAudio && this.localAudioTrack == null)
                 {
-                    this.localAudioTrack = this.getLocalAudio(factory);
+                    if (mediaOptions.SendAudio)
+                    {
+                        this.localAudioTrack = this.getLocalAudio(factory);
+                    }
                 }
 
                 if (mediaOptions.SendVideo)
@@ -365,7 +371,6 @@ namespace WebRtcImplNew
         {
             // client only.
             await this.peerConnections[0].AddIceCandidate(candidate);
-            //this.CallStarted?.Invoke(this, EventArgs.Empty);
         }
 
         private async void signaller_ReceivedOffer(object sender, RTCSessionDescription offer)

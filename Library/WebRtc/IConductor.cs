@@ -21,7 +21,7 @@ namespace ApolloLensLibrary.WebRtc
     /// WebRtc for UWP example conductor.
     /// </summary>
     public interface IConductor
-    {   
+    {
         /// <summary>
         /// Exposes internal signaller object through the
         /// IUISignaller interface.
