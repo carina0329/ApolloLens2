@@ -249,23 +249,23 @@ namespace WebRtcImplNew
 
                 peerConnection.OnTrack += this.peerConnection_OnTrack;
 
-                if (mediaOptions.SendVideo || mediaOptions.LocalLoopback)
+                if ((mediaOptions.SendVideo || mediaOptions.LocalLoopback) && this.localVideoTrack == null)
                 {
                     this.localVideoTrack = this.getLocalVideo(factory);
                 }
 
-                if (mediaOptions.SendAudio)
+                if (mediaOptions.SendAudio && this.localAudioTrack == null)
                 {
                     this.localAudioTrack = this.getLocalAudio(factory);
                 }
 
                 if (mediaOptions.SendVideo)
                 {
-                    peerConnection.AddTrack(this.getLocalVideo(factory));
+                    peerConnection.AddTrack(this.localVideoTrack);
                 }
                 if (mediaOptions.SendAudio)
                 {
-                    peerConnection.AddTrack(this.getLocalAudio(factory));
+                    peerConnection.AddTrack(this.localAudioTrack);
                 }
 
                 if (mediaOptions.LocalLoopback)
