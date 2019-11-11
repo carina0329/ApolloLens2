@@ -247,14 +247,15 @@ namespace WebRtcImplNew
 
                 peerConnection.OnTrack += this.peerConnection_OnTrack;
 
-                if (this.localVideoTrack == null)
+                if ((mediaOptions.SendVideo || mediaOptions.LocalLoopback) && this.localVideoTrack == null)
                 {
                     if (mediaOptions.SendVideo || mediaOptions.LocalLoopback)
                     {
                         this.localVideoTrack = this.getLocalVideo(factory);
                     }
                 }
-                if (this.localAudioTrack == null)
+
+                if (mediaOptions.SendAudio && this.localAudioTrack == null)
                 {
                     if (mediaOptions.SendAudio)
                     {
@@ -268,7 +269,7 @@ namespace WebRtcImplNew
                 }
                 if (mediaOptions.SendAudio)
                 {
-                    peerConnection.AddTrack(this.getLocalAudio(factory));
+                    peerConnection.AddTrack(this.localAudioTrack);
                 }
 
                 if (mediaOptions.LocalLoopback)
