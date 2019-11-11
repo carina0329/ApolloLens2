@@ -13,7 +13,7 @@
         /// AWS (elastic beanstalk) default
         /// </remarks>
         // public static readonly string AwsAddress = "ws://mrdrhololens-env.k3p7whppy6.us-east-2.elasticbeanstalk.com";
-        public static readonly string AwsAddress = "ws://35.1.204.64";
+        public static readonly string AwsAddress = "ws://35.0.22.41";
 
 
         /// <summary>

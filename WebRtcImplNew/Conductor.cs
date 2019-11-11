@@ -25,21 +25,20 @@ namespace WebRtcImplNew
 
         #region PrivateProperties
 
-        private MediaOptions mediaOptions { get; set; }
+        private MediaOptions mediaOptions { get; set; } // global (source & client)
 
-        private CaptureProfile selectedProfile { get; set; }
-        private VideoDevice selectedDevice { get; set; }
+        private CaptureProfile selectedProfile { get; set; } // global (source)
+        private VideoDevice selectedDevice { get; set; } // global (source)
 
-        private IMediaStreamTrack remoteVideoTrack;
+        private IMediaStreamTrack remoteVideoTrack; // global (client)
         private IMediaStreamTrack localVideoTrack;
-        private IMediaStreamTrack remoteAudioTrack;
+        private IMediaStreamTrack remoteAudioTrack; // global (client)
         private IMediaStreamTrack localAudioTrack;
 
-        private IWebRtcFactory webRtcFactory { get; set; }
+        private List<RTCPeerConnection> peerConnections { get; set; } = new List<RTCPeerConnection>();
 
-        private List<RTCPeerConnection> peerConnections { get; set; }
         private string identity { get; set; }
-        private RTCPeerConnection peerConnection { get; set; }
+        // private RTCPeerConnection peerConnection { get; set; }
 
         private CoreDispatcher coreDispatcher { get; set; }
         private IWebRtcSignaller<RTCIceCandidate, RTCSessionDescription> signaller { get; set; }
@@ -149,6 +148,7 @@ namespace WebRtcImplNew
 
         public void SetMediaOptions(MediaOptions options)
         {
+            // media options are global for the source
             if (options.LocalLoopback && this.localVideo == null)
                 throw new ArgumentException();
 
@@ -160,20 +160,23 @@ namespace WebRtcImplNew
 
         public void SetSelectedProfile(CaptureProfile captureProfile)
         {
+            // capture profile is global for the source
             this.selectedProfile = captureProfile;
         }
 
         public void SetSelectedMediaDevice(VideoDevice mediaDevice)
         {
+            // video device is global for the source
             this.selectedDevice = mediaDevice;
         }
 
         public async Task StartCall()
         {
-            if (this.peerConnection != null)
-                throw new Exception();
+            // only called by client, so no need to verify identity.
+            if (this.peerConnections.Count != 0)
+                throw new Exception("Peer connection already exists.");
 
-            this.peerConnection = await this.buildPeerConnection(this.mediaOptions);
+            this.peerConnections.Add(await this.buildPeerConnection(this.mediaOptions));
 
             var connectToPeer =
                 this.mediaOptions.SendAudio ||
@@ -189,38 +192,39 @@ namespace WebRtcImplNew
                     OfferToReceiveVideo = this.mediaOptions.ReceiveVideo
                 };
 
-                var offer = await this.peerConnection.CreateOffer(offerOptions);
-                await this.peerConnection.SetLocalDescription(offer);
+                // because this is the client, only one peer connection will exist.
+                var offer = await this.peerConnections[0].CreateOffer(offerOptions);
+                await this.peerConnections[0].SetLocalDescription(offer);
                 await this.signaller.SendOffer((RTCSessionDescription)offer);
             }
         }
 
         public Task Shutdown()
         {
-            if (this.peerConnection != null)
+            foreach (RTCPeerConnection pc in this.peerConnections)
             {
-                this.peerConnection.OnIceCandidate -= this.peerConnection_OnIceCandidate;
-                this.peerConnection.OnTrack -= this.peerConnection_OnTrack;
-
-                if (this.remoteVideoTrack != null) this.remoteVideoTrack.Element = null;
-                if (this.localVideoTrack != null) this.localVideoTrack.Element = null;
-
-                (this.remoteVideoTrack as IDisposable)?.Dispose();
-                (this.localVideoTrack as IDisposable)?.Dispose();
-                (this.remoteAudioTrack as IDisposable)?.Dispose();
-                (this.localAudioTrack as IDisposable)?.Dispose();
-
-                this.remoteVideoTrack = null;
-                this.localVideoTrack = null;
-                this.remoteAudioTrack = null;
-                this.localAudioTrack = null;
-
-                (this.peerConnection as IDisposable)?.Dispose();
-                this.peerConnection = null;
-
-                GC.Collect();
+                pc.OnIceCandidate -= this.peerConnection_OnIceCandidate;
+                pc.OnTrack -= this.peerConnection_OnTrack;
+                (pc as IDisposable)?.Dispose();
             }
 
+            this.peerConnections.Clear();
+
+            if (this.remoteVideoTrack != null) this.remoteVideoTrack.Element = null;
+            if (this.localVideoTrack != null) this.localVideoTrack.Element = null;
+
+            (this.remoteVideoTrack as IDisposable)?.Dispose();
+            (this.localVideoTrack as IDisposable)?.Dispose();
+            (this.remoteAudioTrack as IDisposable)?.Dispose();
+            (this.localAudioTrack as IDisposable)?.Dispose();
+
+            this.remoteVideoTrack = null;
+            this.localVideoTrack = null;
+            this.remoteAudioTrack = null;
+            this.localAudioTrack = null;
+
+            GC.Collect();
+            
             return Task.CompletedTask;
         }
 
@@ -257,11 +261,11 @@ namespace WebRtcImplNew
 
                 if (mediaOptions.SendVideo)
                 {
-                    peerConnection.AddTrack(this.localVideoTrack);
+                    peerConnection.AddTrack(this.getLocalVideo(factory));
                 }
                 if (mediaOptions.SendAudio)
                 {
-                    peerConnection.AddTrack(this.localAudioTrack);
+                    peerConnection.AddTrack(this.getLocalAudio(factory));
                 }
 
                 if (mediaOptions.LocalLoopback)
@@ -275,6 +279,7 @@ namespace WebRtcImplNew
 
         private void peerConnection_OnTrack(IRTCTrackEvent ev)
         {
+            // client only.
             if (ev.Track.Kind == "video")
             {
                 this.remoteVideoTrack = ev.Track;
@@ -360,30 +365,30 @@ namespace WebRtcImplNew
 
         private async void signaller_ReceivedIceCandidate(object sender, RTCIceCandidate candidate)
         {
-            await this.peerConnection.AddIceCandidate(candidate);
+            // client only.
+            await this.peerConnections[0].AddIceCandidate(candidate);
             this.CallStarted?.Invoke(this, EventArgs.Empty);
         }
 
         private async void signaller_ReceivedOffer(object sender, RTCSessionDescription offer)
         {
-            if (this.peerConnection != null)
-                return;
+            // server only.
+            this.peerConnections.Add(await this.buildPeerConnection(this.mediaOptions));
 
-            this.peerConnection = await this.buildPeerConnection(this.mediaOptions);
+            await this.peerConnections[this.peerConnections.Count-1].SetRemoteDescription(offer);
 
-            await this.peerConnection.SetRemoteDescription(offer);
-
-            var answer = await this.peerConnection.CreateAnswer(new RTCAnswerOptions());
-            await this.peerConnection.SetLocalDescription(answer);
+            var answer = await this.peerConnections[this.peerConnections.Count - 1].CreateAnswer(new RTCAnswerOptions());
+            await this.peerConnections[this.peerConnections.Count - 1].SetLocalDescription(answer);
             await this.signaller.SendAnswer((RTCSessionDescription)answer);
 
-            this.peerConnection.OnIceCandidate += this.peerConnection_OnIceCandidate;
+            this.peerConnections[this.peerConnections.Count - 1].OnIceCandidate += this.peerConnection_OnIceCandidate;
         }
 
         private async void signaller_ReceivedAnswer(object sender, RTCSessionDescription answer)
         {
-            await this.peerConnection.SetRemoteDescription(answer);
-            this.peerConnection.OnIceCandidate += this.peerConnection_OnIceCandidate;
+            // client only.
+            await this.peerConnections[0].SetRemoteDescription(answer);
+            this.peerConnections[0].OnIceCandidate += this.peerConnection_OnIceCandidate;
         }
 
         #endregion
