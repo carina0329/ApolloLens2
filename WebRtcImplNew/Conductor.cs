@@ -48,8 +48,6 @@ namespace WebRtcImplNew
 
         #endregion
 
-        public EventHandler CallStarted { get; set; }
-
         #region Interface
 
         public async Task<IList<CaptureProfile>> GetCaptureProfiles(VideoDevice device)
@@ -249,19 +247,24 @@ namespace WebRtcImplNew
 
                 peerConnection.OnTrack += this.peerConnection_OnTrack;
 
-                if (mediaOptions.SendVideo || mediaOptions.LocalLoopback)
+                if (this.localVideoTrack == null)
                 {
-                    this.localVideoTrack = this.getLocalVideo(factory);
+                    if (mediaOptions.SendVideo || mediaOptions.LocalLoopback)
+                    {
+                        this.localVideoTrack = this.getLocalVideo(factory);
+                    }
                 }
-
-                if (mediaOptions.SendAudio)
+                if (this.localAudioTrack == null)
                 {
-                    this.localAudioTrack = this.getLocalAudio(factory);
+                    if (mediaOptions.SendAudio)
+                    {
+                        this.localAudioTrack = this.getLocalAudio(factory);
+                    }
                 }
 
                 if (mediaOptions.SendVideo)
                 {
-                    peerConnection.AddTrack(this.getLocalVideo(factory));
+                    peerConnection.AddTrack(this.localVideoTrack);
                 }
                 if (mediaOptions.SendAudio)
                 {
@@ -367,7 +370,7 @@ namespace WebRtcImplNew
         {
             // client only.
             await this.peerConnections[0].AddIceCandidate(candidate);
-            this.CallStarted?.Invoke(this, EventArgs.Empty);
+
         }
 
         private async void signaller_ReceivedOffer(object sender, RTCSessionDescription offer)

@@ -105,12 +105,6 @@ namespace ApolloLensClient
             {
                 Logger.Log(message);
             };
-
-            this.conductor.CallStarted += async (s, a) =>
-            {
-               //await System.Threading.Tasks.Task.Delay(10000);
-               //this.signaller.DisconnectFromServer();
-            };
         }
 
 

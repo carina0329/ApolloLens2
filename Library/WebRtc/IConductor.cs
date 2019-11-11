@@ -22,10 +22,6 @@ namespace ApolloLensLibrary.WebRtc
     /// </summary>
     public interface IConductor
     {
-        /// <summary>
-        /// Event handler for started call. Will be implemented for client.
-        /// </summary>
-        EventHandler CallStarted { get; set; }
         
         /// <summary>
         /// Exposes internal signaller object through the
