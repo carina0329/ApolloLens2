@@ -48,8 +48,6 @@ namespace WebRtcImplNew
 
         #endregion
 
-        public EventHandler CallStarted { get; set; }
-
         #region Interface
 
         public async Task<IList<CaptureProfile>> GetCaptureProfiles(VideoDevice device)
@@ -367,7 +365,7 @@ namespace WebRtcImplNew
         {
             // client only.
             await this.peerConnections[0].AddIceCandidate(candidate);
-            this.CallStarted?.Invoke(this, EventArgs.Empty);
+            //this.CallStarted?.Invoke(this, EventArgs.Empty);
         }
 
         private async void signaller_ReceivedOffer(object sender, RTCSessionDescription offer)

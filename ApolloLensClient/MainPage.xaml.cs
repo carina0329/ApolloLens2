@@ -6,6 +6,7 @@ using WebRtcImplNew;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -21,6 +22,7 @@ namespace ApolloLensClient
         private Boolean isConnectedToSource = false;
         private WebsocketSignaller signaller = null;
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
+        private ProtocolSignaller<WebRtcSignaller.WebRtcMessage> cursorSignaller = null;
 
         public MainPage()
         {
@@ -47,7 +49,13 @@ namespace ApolloLensClient
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
             signaller = new WebsocketSignaller("client");
-
+            var protocol = new MessageProtocol<WebRtcSignaller.WebRtcMessage>();
+            this.cursorSignaller = new ProtocolSignaller<WebRtcSignaller.WebRtcMessage>
+            (
+                signaller,
+                protocol
+            );
+            
             // Not implemented for source, but necessary here.
             // EX: signaller connection void before source<=>client connection made.
             // This could happen if the source was disconnected before direct connection.
@@ -59,6 +67,7 @@ namespace ApolloLensClient
                     {
                         this.ConnectedOptions.Hide();
                         this.StartupSettings.Show();
+                        this.CursorElement.Hide();
                     }
                 });
             };
@@ -67,6 +76,7 @@ namespace ApolloLensClient
             {
                 this.ConnectedOptions.Hide();
                 this.StartupSettings.Show();
+                this.CursorElement.Hide();
             };
 
             this.ServerConnectButton.Click += async (s, a) =>
@@ -74,7 +84,28 @@ namespace ApolloLensClient
                 this.StartupSettings.Hide();
                 await signaller.ConnectToServer(ServerConfig.AwsAddress);
                 isConnectedToSource = false;
-                if (signaller.connected) this.ConnectedOptions.Show();
+
+                if (signaller.connected)
+                {
+                    this.ConnectedOptions.Show();
+                    this.CursorElement.Show();
+                }
+            };
+
+            this.CursorElement.ManipulationDelta += async (s, e) =>
+            {
+                double newX = this.t_Transform.TranslateX + e.Delta.Translation.X,
+                    newY = this.t_Transform.TranslateY + e.Delta.Translation.Y;
+
+                if (this.isConnectedToSource)
+                {
+                    await this.cursorSignaller.SendMessage(
+                        WebRtcSignaller.WebRtcMessage.CursorUpdate,
+                        "{ x: " + newX.ToString() + ", y: " + newY.ToString() + "}"
+                    );
+                }
+                this.t_Transform.TranslateX += e.Delta.Translation.X;
+                this.t_Transform.TranslateY += e.Delta.Translation.Y;
             };
 
             var config = new ConductorConfig()
@@ -106,10 +137,10 @@ namespace ApolloLensClient
                 Logger.Log(message);
             };
 
-            this.conductor.CallStarted += async (s, a) =>
+            this.conductor.UISignaller.ReceivedCursorUpdate += (s, update) =>
             {
-               //await System.Threading.Tasks.Task.Delay(10000);
-               //this.signaller.DisconnectFromServer();
+                Logger.Log(update.x.ToString());
+                Logger.Log(update.y.ToString());
             };
         }
 
