@@ -139,8 +139,9 @@ namespace ApolloLensClient
 
             this.conductor.UISignaller.ReceivedCursorUpdate += (s, update) =>
             {
-                Logger.Log(update.x.ToString());
-                Logger.Log(update.y.ToString());
+
+                this.t_Transform.TranslateX = update.x;
+                this.t_Transform.TranslateY = update.y;
             };
         }
 
