@@ -86,11 +86,11 @@
             Grid.Column="1"
             HorizontalAlignment="Stretch"
             RealTimePlayback="True" />
-        <TextBlock Text="MOUSE" Name="CursorElement" ManipulationMode = "TranslateX, TranslateY, Scale"
+        <Ellipse Name="CursorElement" Height="50" Stroke="Green" Fill="Aqua" Width="50" ManipulationMode = "TranslateX, TranslateY, Scale"
                    Visibility="Collapsed">
-            <TextBlock.RenderTransform>
+            <Ellipse.RenderTransform>
                 <CompositeTransform x:Name="t_Transform" />
-            </TextBlock.RenderTransform>
-        </TextBlock>
+            </Ellipse.RenderTransform>
+        </Ellipse>
     </Grid>
 </Page>

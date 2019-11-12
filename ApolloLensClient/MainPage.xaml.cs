@@ -94,8 +94,8 @@ namespace ApolloLensClient
 
             this.CursorElement.ManipulationDelta += async (s, e) =>
             {
-                double newX = this.t_Transform.TranslateX + e.Delta.Translation.X,
-                    newY = this.t_Transform.TranslateY + e.Delta.Translation.Y;
+                double newX = (this.t_Transform.TranslateX + e.Delta.Translation.X) / this.RemoteVideo.ActualWidth,
+                    newY = (this.t_Transform.TranslateY + e.Delta.Translation.Y) / this.RemoteVideo.ActualHeight;
 
                 if (this.isConnectedToSource)
                 {
@@ -137,10 +137,13 @@ namespace ApolloLensClient
                 Logger.Log(message);
             };
 
-            this.conductor.UISignaller.ReceivedCursorUpdate += (s, update) =>
+            this.conductor.UISignaller.ReceivedCursorUpdate += async (s, update) =>
             {
-                Logger.Log(update.x.ToString());
-                Logger.Log(update.y.ToString());
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                {
+                    this.t_Transform.TranslateX = update.x * this.RemoteVideo.ActualWidth;
+                    this.t_Transform.TranslateY = update.y * this.RemoteVideo.ActualHeight;
+                });
             };
         }
 
