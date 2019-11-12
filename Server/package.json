@@ -9,8 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ws": "^6.1.4",
-    "ip": "1.1.5"
+    "ip": "1.1.5",
+    "package.json": "^2.0.1",
+    "ws": "^6.1.4"
   },
   "engines": {
     "node": "10.14.1"

@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 
 namespace WebRtcImplNew
 {
+    
     public class WebRtcSignaller : IWebRtcSignaller<RTCIceCandidate, RTCSessionDescription>
     {
         public event EventHandler<RTCIceCandidate> ReceivedIceCandidate;
@@ -17,15 +18,17 @@ namespace WebRtcImplNew
         public event EventHandler<RTCSessionDescription> ReceivedOffer;
         public event EventHandler<string> ReceivedPlain;
         public event EventHandler ReceivedShutdown;
+        public event EventHandler<CursorUpdate> ReceivedCursorUpdate;
 
         private ProtocolSignaller<WebRtcMessage> Signaller { get; }
-        private enum WebRtcMessage
+        public enum WebRtcMessage
         {
             Offer,
             Answer,
             IceCandidate,
             Plain,
-            Shutdown
+            Shutdown,
+            CursorUpdate
         };
 
         public WebRtcSignaller(IBasicSignaller signaller)
@@ -60,7 +63,12 @@ namespace WebRtcImplNew
                         break;
 
                     case WebRtcMessage.Shutdown:
-                        this.ReceivedShutdown(this, EventArgs.Empty);
+                        this.ReceivedShutdown?.Invoke(this, EventArgs.Empty);
+                        break;
+
+                    case WebRtcMessage.CursorUpdate:
+                        var update = JsonConvert.DeserializeObject<CursorUpdate>(message.Contents);
+                        this.ReceivedCursorUpdate?.Invoke(this, update);
                         break;
                 }
             };

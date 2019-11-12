@@ -3,6 +3,12 @@ using System.Threading.Tasks;
 
 namespace ApolloLensLibrary.WebRtc
 {
+    public class CursorUpdate
+    {
+        public double x;
+        public double y;
+    }
+
     /// <summary>
     /// Defines the interface needed by the conductor
     /// to communicate with a peer over a signalling
@@ -33,6 +39,7 @@ namespace ApolloLensLibrary.WebRtc
     {
         event EventHandler<string> ReceivedPlain;
         event EventHandler ReceivedShutdown;
+        event EventHandler<CursorUpdate> ReceivedCursorUpdate;
 
         Task SendPlain(string message);
         Task SendShutdown();

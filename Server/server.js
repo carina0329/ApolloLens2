@@ -67,6 +67,14 @@ wss.on('connection', function connection(ws, request, client) {
                     }
                 });
             }
+            else if (jmsg.MessageType == "5") {
+                wss.clients.forEach((client) => {
+                    // target = source. we don't want to send to source
+                    if (client !== ws && client.id != target && client.readyState === ws.OPEN) {
+                        client.send(message);
+                    }
+                })
+            }
             else if (target === "source") {
                 lastPingedClient = ws.uid;
                 wss.clients.forEach((client) => {
