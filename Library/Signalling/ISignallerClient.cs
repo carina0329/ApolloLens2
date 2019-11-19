@@ -2,12 +2,12 @@ using System;
 using System.Threading.Tasks;
 using Windows.Networking.Sockets;
 
-namespace ApolloLensLibrary.Signaller 
+namespace ApolloLensLibrary.Signalling 
 {
     /// <summary>
     /// Defines the "signaller" interface.
     /// Functionality includes (to/from signaller):
-    /// (1) Connect & Register
+    /// (1) Connect / Register
     /// (2) Send
     /// (3) Receive
     /// (4) Disconnect
@@ -20,10 +20,10 @@ namespace ApolloLensLibrary.Signaller
         /// Used for registration with Signaller.
         /// Refers to future WebRTC connection: can be a "client" or "source."
         /// </summary>
-        public string registrationId { get; set; }
+        string RegistrationId { get; }
 
-        public bool isConnected { get; set; } = false;
-        private MessageWebSocket WebSocket { get; set; }
+        bool IsConnected { get; }
+        MessageWebSocket WebSocket { get; set; }
 
         #endregion
 
@@ -39,22 +39,22 @@ namespace ApolloLensLibrary.Signaller
         /// <summary>
         /// Disconnects from Signaller (Server).
         /// </summary>
-        public void DisconnectFromSignaller();
+        void DisconnectFromSignaller();
 
         /// <summary>
         /// Handler for connection success. 
         /// </summary>
-        public event EventHandler ConnectionSucceeded;
+        event EventHandler ConnectionSucceeded;
 
         /// <summary>
         /// Handler for connection failure.
         /// </summary>
-        public event EventHandler ConnectionFailed;
+        event EventHandler ConnectionFailed;
 
         /// <summary>
         /// Handler for connection end.
         /// </summary>
-        public event EventHandler ConnectionEnded;
+        event EventHandler ConnectionEnded;
 
 
         #endregion
@@ -64,10 +64,10 @@ namespace ApolloLensLibrary.Signaller
         /// <summary>
         /// Handler for message from Signaller.
         /// </summary>
-        event EventHandler<string> ReceivedMessage;
+        event EventHandler<MessageWebSocket> ReceivedMessage;
 
         /// <summary>
-        /// Sends plaintext message to Signaller.
+        /// Sends message to Signaller.
         /// </summary>
         /// <param name="message">Plaintext message</param>
         /// <returns>Async</returns>

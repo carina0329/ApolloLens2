@@ -137,6 +137,8 @@
     <Compile Include="Imaging\ImageTransferObject.cs" />
     <Compile Include="Imaging\SmartBitmap.cs" />
     <Compile Include="Signalling\IBasicSignaller.cs" />
+    <Compile Include="Signalling\ISignallerClient.cs" />
+    <Compile Include="Signalling\ISignallerProtocol.cs" />
     <Compile Include="Signalling\MessageProtocol.cs" />
     <Compile Include="Signalling\ProtocolSignaller.cs" />
     <Compile Include="Signalling\WebsocketSignaller.cs" />
