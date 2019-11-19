@@ -1,0 +1,16 @@
+{
+    "Signaller" : {
+        "Address": "ws://35.0.22.41",
+        "MessageKey" : "MessageType",
+        "MessageValue": "MessageContents",
+        "MessageTypes" : [
+            "Register",
+            "Plain",
+            "Offer",
+            "Answer",
+            "IceCandidate",
+            "Shutdown",
+            "CursorUpdate"
+        ]
+    }
+}

@@ -24,6 +24,7 @@ namespace ApolloLensLibrary.Signalling
         public bool connected { get; set; } = false;
         public string identity { get; set; }
 
+        // moved
         /// <summary>
         /// Constructor. Defines connection identity.
         /// </summary>
@@ -117,6 +118,7 @@ namespace ApolloLensLibrary.Signalling
             }
         }
 
+        // moved.
         private void WebSocket_Closed(IWebSocket sender, WebSocketClosedEventArgs args)
         {
             this.connected = false;

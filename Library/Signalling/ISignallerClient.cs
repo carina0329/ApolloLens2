@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Windows.Networking.Sockets;
 
 namespace ApolloLensLibrary.Signalling 
@@ -21,9 +22,31 @@ namespace ApolloLensLibrary.Signalling
         /// Refers to future WebRTC connection: can be a "client" or "source."
         /// </summary>
         string RegistrationId { get; }
-
+        
+        /// <summary>
+        /// Signaller address.
+        /// </summary>
+        /// <value>Needs to be in the form "ws://..." or "wss://..."</value>
+        string Address { get; }
         bool IsConnected { get; }
-        MessageWebSocket WebSocket { get; set; }
+        MessageWebSocket WebSocket { get; }
+
+        /// <summary>
+        /// Used to store message type signifiers from Library/Utilities/config.json.
+        /// Must be referenced by any Signaller users to behave appropriately with Signaller.
+        /// </summary>
+        Dictionary<string, string> MessageType { get; }
+        SignallerMessageProtocol MessageProtocol { get; }
+
+        #endregion
+
+        #region init
+
+        /// <summary>
+        /// Read all from Library/Utilities/config.json
+        /// under "Signaller" and populate appropriately.
+        /// </summary>
+        void Configure();
 
         #endregion
 
@@ -34,7 +57,7 @@ namespace ApolloLensLibrary.Signalling
         /// </summary>
         /// <param name="address">Connection Parameters</param>
         /// <returns>Async</returns>
-        Task ConnectToSignaller(string address);
+        Task ConnectToSignaller();
 
         /// <summary>
         /// Disconnects from Signaller (Server).
@@ -42,19 +65,26 @@ namespace ApolloLensLibrary.Signalling
         void DisconnectFromSignaller();
 
         /// <summary>
-        /// Handler for connection success. 
+        /// Handler for connection success.
+        /// Registers with Signaller (Server).
         /// </summary>
-        event EventHandler ConnectionSucceeded;
-
-        /// <summary>
-        /// Handler for connection failure.
-        /// </summary>
-        event EventHandler ConnectionFailed;
+        void ConnectionSucceeded();
 
         /// <summary>
         /// Handler for connection end.
+        /// Associated with Websocket.
         /// </summary>
-        event EventHandler ConnectionEnded;
+        void ConnectionEnded(IWebSocket sender, WebSocketClosedEventArgs args);
+
+        /// <summary>
+        /// UI Handler for connection end.
+        /// </summary>
+        event EventHandler ConnectionEndedUIHandler;
+
+                /// <summary>
+        /// UI Handler for connection failure.
+        /// </summary>
+        event EventHandler ConnectionFailedUIHandler;
 
 
         #endregion
@@ -62,16 +92,22 @@ namespace ApolloLensLibrary.Signalling
         #region messages
 
         /// <summary>
-        /// Handler for message from Signaller.
-        /// </summary>
-        event EventHandler<MessageWebSocket> ReceivedMessage;
-
-        /// <summary>
         /// Sends message to Signaller.
         /// </summary>
         /// <param name="message">Plaintext message</param>
         /// <returns>Async</returns>
         Task SendMessage(string message);
+
+        /// <summary>
+        /// Handler for received message.
+        /// Associated with Websocket.
+        /// </summary>
+        void ReceivedMessage(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args);
+
+        /// <summary>
+        /// External Handler for received message from Signaller.
+        /// </summary>
+        event EventHandler<SignallerMessage> ReceivedMessageExternalHandler;
 
         #endregion
     }
