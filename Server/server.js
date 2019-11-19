@@ -1,6 +1,7 @@
 // requirements
 const WebSocketServer = require('ws').Server;
 const ip = require("ip");
+const fs = require("fs");
 
 // network info
 const addr = ip.address();
@@ -23,73 +24,103 @@ let sourceConnections = 0;
 // when establishing webrtc connections
 let lastPingedClient = -1;
 
+// get configuration from file.
+let messageTypes = {};
+let messageKey = "";
+let messageValue = "";
+try {
+    let rawdata = fs.readFileSync('../Library/Utilities/config.json');
+    let jsonData = JSON.parse(rawdata);
+    for (mt in jsonData.MessageTypes) {
+        messageTypes[mt] = mt;
+    }
+    messageKey = jsonData.MessageKey;
+    messageValue = jsonData.MessageValue;
+}
+catch {
+    console.log("Failed to parse config.json.");
+    process.exit(1);
+}
+console.log("Loaded configuration from config.json. Current messageTypes:");
+console.log(messageTypes);
+
 // handler for a new connection to the server
 wss.on('connection', function connection(ws, request, client) {
 
     // mark this connection uniquely
     ws.uid = uniqueConnectionId++;
+    ws.id = null;
 
     console.log(`Opened connection ${ws.uid}`);
 
     // handler for receiving a message on the socket
-    ws.on('message', (message) => {
-        // (1) registration uses a plain string
-        // (2) hello world test. converts to JSON first.
-        //  source forwards to all clients
-        //  client only sends to source
-        // (3) webrtc establishment via ice exhcnage, etc..
-        //  client -> source. source -> same client.
-        //  this is where keeping track of who's who matters most to enable one-to-many
+    ws.on('message', (rawMessage) => {
+        let target = ws.id === null ? null : (ws.id === "client" ? "source" : "client");
 
+        // signallerClient uses JSON only.
+        // exception handling will catch non-JSON artifacts and return an error.
+        let message;
+        try {
+            message = JSON.parse(rawMessage);
+        }
+        catch(e) {
+            console.log(`Failed to parse json message from ${ws.id} ${ws.uid}`);
+        }
 
-        // registration / string
-        if (message === "client" || message == "source") {
+        // Return error if messageType is invalid.
+        if (message[messageKey] in messageTypes === false) {
+            ws.send(JSON.stringify({messageKey: messageTypes["Plain"], messageValue: "Invalid message type."}));
+            return;
+        }
+
+        // registration. client -> signaller || source -> signaller.
+        if (message[messageKey] === messageTypes["Register"]) {
             ws.id = message;
 
-            if (ws.id === "source" && sourceConnections === 1) {
+            if ((ws.id !== "source" && ws.id !== "client") || (ws.id === "source" && sourceConnections === 1)) {
                 console.log(`Rejected connection ${ws.id} ${ws.uid}`);
                 ws.close(ServerFullCode, ServerFullError);
+                return;
             }
 
             // increment open source connections
             console.log(`Registered connection ${ws.uid} as ${ws.id}`);
             sourceConnections += ws.id === "source";
+
         }
+        // plain message. client -> signaller -> source || source -> signaller -> all clients.
+        else if (message[messageKey] === messageTypes["Plain"]) {
+            wss.clients.forEach((client) => {
+                if (client !== ws && client.id === target && client.readyState === ws.OPEN) {
+                    client.send(message);
+                }
+            });
+        }
+        // cursor update. client -> signaller -> all other clients.
+        else if (message[messageKey] === messageTypes["CursorUpdate"]) {
+            wss.clients.forEach((client) => {
+                // target = source based on above logic. but this case is an exception, we don't want to send to source.
+                if (client !== ws && client.id != target && client.readyState === ws.OPEN) {
+                    client.send(message);
+                }
+            })
+        }
+        // webrtc exchange. client -> signaller -> source.
+        else if (target === "source") {
+            lastPingedClient = ws.uid;
+            wss.clients.forEach((client) => {
+                if (client.id === target && client.readyState === ws.OPEN) {
+                    client.send(message);
+                }
+            });
+        }
+        // webrtc exchange. source -> signaller -> specific client.
         else {
-
-            let jmsg = JSON.parse(message);
-            let target = ws.id === "client" ? "source" : "client";
-
-            if (jmsg.MessageContents === "Hello, World!") {
-                wss.clients.forEach((client) => {
-                    if (client !== ws && client.id === target && client.readyState === ws.OPEN) {
-                        client.send(message);
-                    }
-                });
-            }
-            else if (jmsg.MessageType == "5") {
-                wss.clients.forEach((client) => {
-                    // target = source. we don't want to send to source
-                    if (client !== ws && client.id != target && client.readyState === ws.OPEN) {
-                        client.send(message);
-                    }
-                })
-            }
-            else if (target === "source") {
-                lastPingedClient = ws.uid;
-                wss.clients.forEach((client) => {
-                    if (client.id === target && client.readyState === ws.OPEN) {
-                        client.send(message);
-                    }
-                });
-            }
-            else {
-                wss.clients.forEach((client) => {
-                    if (client.uid === lastPingedClient && client.readyState === ws.OPEN) {
-                        client.send(message);
-                    }
-                })
-            }
+            wss.clients.forEach((client) => {
+                if (client.uid === lastPingedClient && client.readyState === ws.OPEN) {
+                    client.send(message);
+                }
+            })
         }
     });
 
