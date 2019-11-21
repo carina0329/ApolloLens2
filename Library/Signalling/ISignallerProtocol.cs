@@ -11,7 +11,7 @@ namespace ApolloLensLibrary.Signalling
     /// string as a message type signifier.
     /// Allows messages to be distinguished by a string.
     /// </summary>
-    class ISignallerMessageProtocol
+    public abstract class ISignallerMessageProtocol
     {
         string MessageKey { get; set; }
         string MessageValue { get; set; }
@@ -23,7 +23,7 @@ namespace ApolloLensLibrary.Signalling
         /// <param name="type"></param>
         /// <param name="contents"></param>
         /// <returns></returns>
-        string WrapMessage(string type, string contents);
+        public abstract string WrapMessage(string type, string contents);
 
         /// <summary>
         /// Parses a raw JSON string into a Message<T>, where
@@ -32,10 +32,10 @@ namespace ApolloLensLibrary.Signalling
         /// </summary>
         /// <param name="wrapped"></param>
         /// <returns></returns>
-        SignallerMessage UnwrapMessage(string wrapped);
+        public abstract ISignallerMessage UnwrapMessage(string wrapped);
     }
 
-    class ISignallerMessage
+    public class ISignallerMessage
     {
         string Type { get; }
         string Contents { get; }

@@ -36,7 +36,7 @@ namespace ApolloLensLibrary.Signalling
         /// Must be referenced by any Signaller users to behave appropriately with Signaller.
         /// </summary>
         Dictionary<string, string> MessageType { get; }
-        SignallerMessageProtocol MessageProtocol { get; }
+        ISignallerMessageProtocol MessageProtocol { get; }
 
         #endregion
 
@@ -107,7 +107,7 @@ namespace ApolloLensLibrary.Signalling
         /// <summary>
         /// External Handler for received message from Signaller.
         /// </summary>
-        event EventHandler<SignallerMessage> ReceivedMessageExternalHandler;
+        event EventHandler<ISignallerMessage> ReceivedMessageExternalHandler;
 
         #endregion
     }
