@@ -23,7 +23,7 @@ namespace ApolloLensClient
         private WebsocketSignaller signaller = null;
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
         private ProtocolSignaller<WebRtcSignaller.WebRtcMessage> cursorSignaller = null;
-
+        private const double threshold = 0.48;
         public MainPage()
         {
             this.DataContext = this;
@@ -97,6 +97,13 @@ namespace ApolloLensClient
                 double newX = (this.t_Transform.TranslateX + e.Delta.Translation.X) / this.RemoteVideo.ActualWidth,
                     newY = (this.t_Transform.TranslateY + e.Delta.Translation.Y) / this.RemoteVideo.ActualHeight;
 
+                //Logger.Log("newX: " + newX.ToString() + " newY: " + newY.ToString());
+                if (newX < -threshold || newX > threshold
+                    || newY < -threshold || newY > threshold)
+                {
+                    return;
+                }
+                
                 if (this.isConnectedToSource)
                 {
                     await this.cursorSignaller.SendMessage(
@@ -141,6 +148,11 @@ namespace ApolloLensClient
             {
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                 {
+                    if (update.x < -threshold || update.x > threshold
+                    || update.y < -threshold || update.y > threshold)
+                    {
+                        return;
+                    }
                     this.t_Transform.TranslateX = update.x * this.RemoteVideo.ActualWidth;
                     this.t_Transform.TranslateY = update.y * this.RemoteVideo.ActualHeight;
                 });
