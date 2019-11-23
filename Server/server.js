@@ -2,6 +2,7 @@
 const WebSocketServer = require('ws').Server;
 const ip = require("ip");
 const fs = require("fs");
+const path = require("path");
 
 // network info
 const addr = ip.address();
@@ -29,10 +30,10 @@ let messageTypes = {};
 let messageKey = "";
 let messageValue = "";
 try {
-    let rawdata = fs.readFileSync('../Library/Utilities/config.json');
+    let rawdata = fs.readFileSync(path.resolve(__dirname, '../Library/Utilities/config.json'));
     let jsonData = JSON.parse(rawdata);
-    for (mt in jsonData.MessageTypes) {
-        messageTypes[mt] = mt;
+    for (mt in jsonData.Signaller.MessageTypes) {
+        messageTypes[jsonData.Signaller.MessageTypes[mt]] = jsonData.Signaller.MessageTypes[mt];
     }
     messageKey = jsonData.MessageKey;
     messageValue = jsonData.MessageValue;
