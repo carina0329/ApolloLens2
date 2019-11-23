@@ -1,22 +1,49 @@
+using System;
+using System.IO;
+using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
+using Windows.Storage.Streams;
+using System.Collections.Generic;
+using Windows.Networking.Sockets;
+
 namespace ApolloLensLibrary.Signalling
+
 {
     public class SignallerClient : ISignallerClient
     {
         #region variables
 
-        string RegistrationId { get; }
-        string Address { get; }
-        bool IsConnected { get; }
-        MessageWebSocket WebSocket { get; }
+        /// <summary>
+        /// Used for registration with Signaller.
+        /// Refers to future WebRTC connection: can be a "client" or "source."
+        /// </summary>
+        private string RegistrationId { get; }
 
-        Dictionary<string, string> MessageType { get; }
-        SignallerMessageProtocol MessageProtocol { get; }
+        /// <summary>
+        /// Signaller address.
+        /// </summary>
+        /// <value>Needs to be in the form "ws://..." or "wss://..."</value>
+        private string Address { get; set; }
+
+        private MessageWebSocket WebSocket { get; set; }
+        public bool IsConnected { get; set; }
+
+        /// <summary>
+        /// Used to store message type signifiers from Library/Utilities/config.json.
+        /// Must be referenced by any Signaller users to behave appropriately with Signaller.
+        /// </summary>
+        public Dictionary<string, string> MessageType { get; set; }
+        private SignallerMessageProtocol MessageProtocol { get; set; }
 
         #endregion
 
         #region init
 
-        SignallerClient(string id)
+        /// <summary>
+        /// Constructor. Initializes variables.
+        /// </summary>
+        /// <param name="id">Registration Id</param>
+        public SignallerClient(string id)
         {
             this.RegistrationId = id;
             this.IsConnected = false;
@@ -24,23 +51,27 @@ namespace ApolloLensLibrary.Signalling
             this.Configure();
         }
 
-        void Configure()
+        /// <summary>
+        /// Read all from Library/Utilities/config.json
+        /// under "Signaller" and populate appropriately.
+        /// </summary>
+        private void Configure()
         {
-            using (StreamReader r = new StreamReader("../Utilities/config.json"))
+            using (StreamReader r = File.OpenText("../Utilities/config.json"))
             {
                 string json = r.ReadToEnd();
                 var jobj = JObject.Parse(json);
                 this.Address = (string)jobj.SelectToken("Address");
                 this.MessageProtocol = new SignallerMessageProtocol
                 (
-                    (string)jobj.SelectToken("MessageKey");
-                    (string)jobj.SelectToken("MessageValue");
+                    (string)jobj.SelectToken("MessageKey"),
+                    (string)jobj.SelectToken("MessageValue")
                 );
                 this.MessageType = new Dictionary<string, string>();
                 JArray messageTypes = (JArray)jobj.SelectToken("MessageTypes");
                 foreach (JToken type in messageTypes)
                 {
-                    this.MessageType.add((string)type, (string)type);
+                    this.MessageType.Add((string)type, (string)type);
                 }
             }
         }
@@ -49,6 +80,11 @@ namespace ApolloLensLibrary.Signalling
 
         #region connection
 
+        /// <summary>
+        /// Connects to Signaller (Server).
+        /// </summary>
+        /// <param name="address">Connection Parameters</param>
+        /// <returns>Async</returns>
         public async Task ConnectToSignaller()
         {
             try
@@ -67,13 +103,20 @@ namespace ApolloLensLibrary.Signalling
             }
         }
 
+        /// <summary>
+        /// Disconnects from Signaller (Server).
+        /// </summary>
         public void DisconnectFromSignaller()
         {
             this.IsConnected = false;
             this.WebSocket.Close(1000, "");
         }
 
-        private async void ConnectionSucceeded()
+        /// <summary>
+        /// Handler for connection success.
+        /// Registers with Signaller (Server).
+        /// </summary>
+        private async Task ConnectionSucceeded()
         {
             this.IsConnected = true;
             System.Diagnostics.Debug.WriteLine("Connected to Signaller.");
@@ -88,6 +131,10 @@ namespace ApolloLensLibrary.Signalling
             );
         }
 
+        /// <summary>
+        /// Handler for connection end.
+        /// Associated with Websocket.
+        /// </summary>
         private void ConnectionEnded(IWebSocket sender, WebSocketClosedEventArgs args)
         {
             this.IsConnected = false;
@@ -96,14 +143,26 @@ namespace ApolloLensLibrary.Signalling
             this.ConnectionEndedUIHandler?.Invoke(this, EventArgs.Empty);
         }
 
-        event EventHandler ConnectionEndedUIHandler;
-        event EventHandler ConnectionFailedUIHandler;
+        /// <summary>
+        /// UI Handler for connection end.
+        /// </summary>
+        public event EventHandler ConnectionEndedUIHandler;
+
+        /// <summary>
+        /// UI Handler for connection failure.
+        /// </summary>
+        public event EventHandler ConnectionFailedUIHandler;
 
         #endregion
 
         #region messages
 
-        public Task SendMessage(string message)
+        /// <summary>
+        /// Sends message to Signaller.
+        /// </summary>
+        /// <param name="message">Plaintext message</param>
+        /// <returns>Async</returns>
+        public async Task SendMessage(string message)
         {
             if (this.WebSocket == null)
                 throw new ArgumentException("Websocket doesn't exist.");
@@ -116,8 +175,14 @@ namespace ApolloLensLibrary.Signalling
                 await dataWriter.StoreAsync();
                 dataWriter.DetachStream();
             }
+
+            await Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Handler for received message.
+        /// Associated with Websocket.
+        /// </summary>
         private void ReceivedMessage(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
         {
             try
@@ -128,7 +193,7 @@ namespace ApolloLensLibrary.Signalling
                 {
                     dataReader.UnicodeEncoding = UnicodeEncoding.Utf8;
                     string wrapped = dataReader.ReadString(dataReader.UnconsumedBufferLength);
-                    SignallerMessage unwrapped = this.SignallerMessageProtocol.UnwrapMessage(wrapped);
+                    SignallerMessage unwrapped = this.MessageProtocol.UnwrapMessage(wrapped);
                     this.ReceivedMessageExternalHandler?.Invoke(this, unwrapped);
                 }
             }
@@ -142,7 +207,10 @@ namespace ApolloLensLibrary.Signalling
             }
         }
 
-        event EventHandler<SignallerMessage> ReceivedMessageExternalHandler;
+        /// <summary>
+        /// External Handler for received message from Signaller.
+        /// </summary>
+        public event EventHandler<SignallerMessage> ReceivedMessageExternalHandler;
 
         #endregion
     }

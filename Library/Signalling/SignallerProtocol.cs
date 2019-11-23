@@ -6,32 +6,51 @@ namespace ApolloLensLibrary.Signalling
 {
     public class SignallerMessageProtocol : ISignallerMessageProtocol
     {
-        public string MessageKey { get; set; }
-        public string MessageValue { get; set; }
+        private string MessageKey { get; }
+        private string MessageValue { get; }
 
-        SignallerMessageProtocol(string key, string value)
+        /// <summary>
+        /// Constructor. Initializes variables.
+        /// </summary>
+        /// <param name="key">Json Key Encoding</param>
+        /// <param name="value">Json Value Encoding</param>
+        public SignallerMessageProtocol(string key, string value)
         {
             this.MessageKey = key;
             this.MessageValue = value;
         }
 
-        public string WrapMessage(string type, string value) 
+        /// <summary>
+        /// Bundles the specified message and type together
+        /// into a raw string, containing JSON.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="contents"></param>
+        /// <returns></returns>
+        public string WrapMessage(string type, string contents) 
         {
-            JsonObject wrapped = new JsonObject() 
+            JsonObject wrapped = new JsonObject()
             {
-                {
+                { 
                     this.MessageKey,
-                    type
+                    JsonValue.CreateStringValue(type)
                 },
-                {
+                { 
                     this.MessageValue,
-                    contents
+                    JsonValue.CreateStringValue(contents ?? "")
                 }
             };
 
             return wrapped.Stringify();
         }
 
+        /// <summary>
+        /// Parses a raw JSON string into a Message<T>, where
+        /// the Message<t> contains the type (an Enum instance)
+        /// and the message string itself.
+        /// </summary>
+        /// <param name="wrapped"></param>
+        /// <returns></returns>
         public SignallerMessage UnwrapMessage(string wrapped) 
         {
             if (!JsonObject.TryParse(wrapped, out JsonObject unwrapped))

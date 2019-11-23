@@ -141,6 +141,8 @@
     <Compile Include="Signalling\ISignallerProtocol.cs" />
     <Compile Include="Signalling\MessageProtocol.cs" />
     <Compile Include="Signalling\ProtocolSignaller.cs" />
+    <Compile Include="Signalling\SignallerClient.cs" />
+    <Compile Include="Signalling\SignallerProtocol.cs" />
     <Compile Include="Signalling\WebsocketSignaller.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Logger.cs" />
