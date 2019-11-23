@@ -1,6 +1,6 @@
 {
     "Signaller" : {
-        "Address": "ws://35.0.22.41",
+        "Address": "ws://192.168.1.20",
         "MessageKey" : "MessageType",
         "MessageValue": "MessageContents",
         "MessageTypes" : [
