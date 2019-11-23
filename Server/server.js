@@ -35,8 +35,8 @@ try {
     for (mt in jsonData.Signaller.MessageTypes) {
         messageTypes[jsonData.Signaller.MessageTypes[mt]] = jsonData.Signaller.MessageTypes[mt];
     }
-    messageKey = jsonData.MessageKey;
-    messageValue = jsonData.MessageValue;
+    messageKey = jsonData.Signaller.MessageKey;
+    messageValue = jsonData.Signaller.MessageValue;
 }
 catch {
     console.log("Failed to parse config.json.");
@@ -68,6 +68,8 @@ wss.on('connection', function connection(ws, request, client) {
             console.log(`Failed to parse json message from ${ws.id} ${ws.uid}`);
         }
 
+        console.log(message);
+
         // Return error if messageType is invalid.
         if (message[messageKey] in messageTypes === false) {
             ws.send(JSON.stringify({messageKey: messageTypes["Plain"], messageValue: "Invalid message type."}));
@@ -76,7 +78,7 @@ wss.on('connection', function connection(ws, request, client) {
 
         // registration. client -> signaller || source -> signaller.
         if (message[messageKey] === messageTypes["Register"]) {
-            ws.id = message;
+            ws.id = message[messageValue];
 
             if ((ws.id !== "source" && ws.id !== "client") || (ws.id === "source" && sourceConnections === 1)) {
                 console.log(`Rejected connection ${ws.id} ${ws.uid}`);
