@@ -24,6 +24,8 @@ namespace ApolloLensClient
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
         private ProtocolSignaller<WebRtcSignaller.WebRtcMessage> cursorSignaller = null;
 
+        private SignallerClient client;
+
         public MainPage()
         {
             this.DataContext = this;
@@ -40,26 +42,28 @@ namespace ApolloLensClient
 
             Application.Current.Suspending += async (s, e) =>
             {
-                await this.conductor.UISignaller.SendShutdown();
-                await this.conductor.Shutdown();
+                //await this.conductor.UISignaller.SendShutdown();
+                //await this.conductor.Shutdown();
             };
 
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            signaller = new WebsocketSignaller("client");
-            var protocol = new MessageProtocol<WebRtcSignaller.WebRtcMessage>();
-            this.cursorSignaller = new ProtocolSignaller<WebRtcSignaller.WebRtcMessage>
-            (
-                signaller,
-                protocol
-            );
+            //signaller = new WebsocketSignaller("client");
+            //var protocol = new MessageProtocol<WebRtcSignaller.WebRtcMessage>();
+            //this.cursorSignaller = new ProtocolSignaller<WebRtcSignaller.WebRtcMessage>
+            //(
+            //    signaller,
+            //    protocol
+            //);
+
+            client = new SignallerClient("client");
             
             // Not implemented for source, but necessary here.
             // EX: signaller connection void before source<=>client connection made.
             // This could happen if the source was disconnected before direct connection.
-            signaller.ConnectionEnded += async (s, a) =>
+            client.ConnectionEndedUIHandler += async (s, a) =>
             {
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                 {
@@ -72,7 +76,7 @@ namespace ApolloLensClient
                 });
             };
 
-            signaller.ConnectionFailed += (s, a) =>
+            client.ConnectionFailedUIHandler += async (s, a) =>
             {
                 this.ConnectedOptions.Hide();
                 this.StartupSettings.Show();
@@ -82,69 +86,70 @@ namespace ApolloLensClient
             this.ServerConnectButton.Click += async (s, a) =>
             {
                 this.StartupSettings.Hide();
-                await signaller.ConnectToServer(ServerConfig.AwsAddress);
+                //await signaller.ConnectToServer(ServerConfig.AwsAddress);
+                await client.ConnectToSignaller();
                 isConnectedToSource = false;
 
-                if (signaller.connected)
+                if (client.IsConnected)
                 {
                     this.ConnectedOptions.Show();
                     this.CursorElement.Show();
                 }
             };
 
-            this.CursorElement.ManipulationDelta += async (s, e) =>
-            {
-                double newX = (this.t_Transform.TranslateX + e.Delta.Translation.X) / this.RemoteVideo.ActualWidth,
-                    newY = (this.t_Transform.TranslateY + e.Delta.Translation.Y) / this.RemoteVideo.ActualHeight;
+            //this.CursorElement.ManipulationDelta += async (s, e) =>
+            //{
+            //    double newX = (this.t_Transform.TranslateX + e.Delta.Translation.X) / this.RemoteVideo.ActualWidth,
+            //        newY = (this.t_Transform.TranslateY + e.Delta.Translation.Y) / this.RemoteVideo.ActualHeight;
 
-                if (this.isConnectedToSource)
-                {
-                    await this.cursorSignaller.SendMessage(
-                        WebRtcSignaller.WebRtcMessage.CursorUpdate,
-                        "{ x: " + newX.ToString() + ", y: " + newY.ToString() + "}"
-                    );
-                }
-                this.t_Transform.TranslateX += e.Delta.Translation.X;
-                this.t_Transform.TranslateY += e.Delta.Translation.Y;
-            };
+            //    if (this.isConnectedToSource)
+            //    {
+            //        await this.cursorSignaller.SendMessage(
+            //            WebRtcSignaller.WebRtcMessage.CursorUpdate,
+            //            "{ x: " + newX.ToString() + ", y: " + newY.ToString() + "}"
+            //        );
+            //    }
+            //    this.t_Transform.TranslateX += e.Delta.Translation.X;
+            //    this.t_Transform.TranslateY += e.Delta.Translation.Y;
+            //};
 
-            var config = new ConductorConfig()
-            {
-                CoreDispatcher = this.Dispatcher,
-                RemoteVideo = this.RemoteVideo,
-                Signaller = signaller,
-                Identity = "client"
-            };
+            //var config = new ConductorConfig()
+            //{
+            //    CoreDispatcher = this.Dispatcher,
+            //    RemoteVideo = this.RemoteVideo,
+            //    Signaller = signaller,
+            //    Identity = "client"
+            //};
 
-            await this.conductor.Initialize(config);
+            //await this.conductor.Initialize(config);
 
-            var opts = new MediaOptions(
-                new MediaOptions.Init()
-                {
-                    ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
-                    ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
-                    SendAudio = (bool)this.SendAudioCheck.IsChecked
-                });
-            this.conductor.SetMediaOptions(opts);
+            //var opts = new MediaOptions(
+            //    new MediaOptions.Init()
+            //    {
+            //        ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
+            //        ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
+            //        SendAudio = (bool)this.SendAudioCheck.IsChecked
+            //    });
+            //this.conductor.SetMediaOptions(opts);
 
-            this.conductor.UISignaller.ReceivedShutdown += async (s, a) =>
-            {
-                await this.conductor.Shutdown();
-            };
+            //this.conductor.UISignaller.ReceivedShutdown += async (s, a) =>
+            //{
+            //    await this.conductor.Shutdown();
+            //};
 
-            this.conductor.UISignaller.ReceivedPlain += (s, message) =>
-            {
-                Logger.Log(message);
-            };
+            //this.conductor.UISignaller.ReceivedPlain += (s, message) =>
+            //{
+            //    Logger.Log(message);
+            //};
 
-            this.conductor.UISignaller.ReceivedCursorUpdate += async (s, update) =>
-            {
-                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
-                {
-                    this.t_Transform.TranslateX = update.x * this.RemoteVideo.ActualWidth;
-                    this.t_Transform.TranslateY = update.y * this.RemoteVideo.ActualHeight;
-                });
-            };
+            //this.conductor.UISignaller.ReceivedCursorUpdate += async (s, update) =>
+            //{
+            //    await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+            //    {
+            //        this.t_Transform.TranslateX = update.x * this.RemoteVideo.ActualWidth;
+            //        this.t_Transform.TranslateY = update.y * this.RemoteVideo.ActualHeight;
+            //    });
+            //};
         }
 
 
@@ -156,7 +161,8 @@ namespace ApolloLensClient
             isProcessing = true;
 
             var message = "Hello, World!";
-            await this.conductor.UISignaller.SendPlain(message);
+            //await this.conductor.UISignaller.SendPlain(message);
+            await this.client.SendMessage(this.client.MessageType["Plain"], message);
             Logger.Log($"Sent {message} to any connected peers");
 
             isProcessing = false;

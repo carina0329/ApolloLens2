@@ -57,20 +57,21 @@ namespace ApolloLensLibrary.Signalling
         /// </summary>
         private void Configure()
         {
-            using (StreamReader r = File.OpenText("../Utilities/config.json"))
+            using (StreamReader r = File.OpenText("Library\\Utilities\\config.json"))
             {
                 string json = r.ReadToEnd();
                 var jobj = JObject.Parse(json);
-                this.Address = (string)jobj.SelectToken("Address");
+                this.Address = (string)jobj.SelectToken("Signaller.Address");
                 this.MessageProtocol = new SignallerMessageProtocol
                 (
-                    (string)jobj.SelectToken("MessageKey"),
-                    (string)jobj.SelectToken("MessageValue")
+                    (string)jobj.SelectToken("Signaller.MessageKey"),
+                    (string)jobj.SelectToken("Signaller.MessageValue")
                 );
                 this.MessageType = new Dictionary<string, string>();
-                JArray messageTypes = (JArray)jobj.SelectToken("MessageTypes");
+                JArray messageTypes = (JArray)jobj.SelectToken("Signaller.MessageTypes");
                 foreach (JToken type in messageTypes)
                 {
+                    System.Diagnostics.Debug.WriteLine((string)type);
                     this.MessageType.Add((string)type, (string)type);
                 }
             }
@@ -121,14 +122,7 @@ namespace ApolloLensLibrary.Signalling
             this.IsConnected = true;
             System.Diagnostics.Debug.WriteLine("Connected to Signaller.");
 
-            await this.SendMessage
-            (
-                this.MessageProtocol.WrapMessage
-                (
-                    this.MessageType["Register"],
-                    this.RegistrationId
-                )
-            );
+            await this.SendMessage(this.MessageType["Register"], this.RegistrationId);
         }
 
         /// <summary>
@@ -160,18 +154,22 @@ namespace ApolloLensLibrary.Signalling
         /// <summary>
         /// Sends message to Signaller.
         /// </summary>
-        /// <param name="message">Plaintext message</param>
+        /// <param name="message">JSON encoded message</param>
         /// <returns>Async</returns>
-        public async Task SendMessage(string message)
+        public async Task SendMessage(string key, string message)
         {
             if (this.WebSocket == null)
                 throw new ArgumentException("Websocket doesn't exist.");
+            if (!this.MessageType.ContainsKey(key))
+                throw new ArgumentException($"Invalid key {key} used.");
+
+            string wrapped = this.MessageProtocol.WrapMessage(key, message);
 
             // Use a datawriter to write the specified 
             // message to the websocket.
             using (var dataWriter = new DataWriter(this.WebSocket.OutputStream))
             {
-                dataWriter.WriteString(message);
+                dataWriter.WriteString(wrapped);
                 await dataWriter.StoreAsync();
                 dataWriter.DetachStream();
             }

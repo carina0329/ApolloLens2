@@ -19,6 +19,7 @@ namespace ApolloLensSource
     public sealed partial class MainPage : Page
     {
         private IConductor conductor { get; } = Conductor.Instance;
+        private SignallerClient client { get; set; }
 
         public MainPage()
         {
@@ -43,63 +44,83 @@ namespace ApolloLensSource
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            var signaller = new WebsocketSignaller("source");
+            client = new SignallerClient("source");
 
-            signaller.ConnectionFailed += (s, a) =>
+            client.ConnectionFailedUIHandler += (s, a) =>
             {
                 this.Connected.Hide();
                 this.NotConnected.Show();
             };
 
+            
+
+            //var signaller = new WebsocketSignaller("source");
+
+            //signaller.ConnectionFailed += (s, a) =>
+            //{
+            //    this.Connected.Hide();
+            //    this.NotConnected.Show();
+            //};
+
             this.ConnectToServerButton.Click += async (s, a) =>
             {
                 this.NotConnected.Hide();        
-                await signaller.ConnectToServer(ServerConfig.AwsAddress);
-                if (signaller.connected) this.Connected.Show();
+                await client.ConnectToSignaller();
+                if (client.IsConnected) this.Connected.Show();
             };
 
             this.DisconnectFromServerButton.Click += (s, a) =>
             {
                 this.Connected.Hide();
-                signaller.DisconnectFromServer();
+                client.DisconnectFromSignaller();
                 this.NotConnected.Show();
             };
 
-            var config = new ConductorConfig()
+            client.ReceivedMessageExternalHandler += (sender, message) =>
             {
-                CoreDispatcher = this.Dispatcher,
-                Signaller = signaller,
-                Identity = "source"
-            };
-
-            Logger.Log("Initializing WebRTC...");
-            await this.conductor.Initialize(config);
-            Logger.Log("Done.");
-
-            var opts = new MediaOptions(
-                new MediaOptions.Init()
+                switch (message.Type)
                 {
-                    SendVideo = true
-                });
-            this.conductor.SetMediaOptions(opts);
-
-            this.conductor.UISignaller.ReceivedShutdown += async (s, a) =>
-            {
-                await this.conductor.Shutdown();
+                    case "Plain":
+                        Logger.Log(message.Contents);
+                        break;
+                }
             };
 
-            this.conductor.UISignaller.ReceivedPlain += (s, message) =>
-            {
-                Logger.Log(message);
-            };
+            //var config = new ConductorConfig()
+            //{
+            //    CoreDispatcher = this.Dispatcher,
+            //    Signaller = signaller,
+            //    Identity = "source"
+            //};
 
-            var devices = await this.conductor.GetVideoDevices();
-            this.MediaDeviceComboBox.ItemsSource = devices;
-            this.MediaDeviceComboBox.SelectedIndex = 0;
+            //Logger.Log("Initializing WebRTC...");
+            //await this.conductor.Initialize(config);
+            //Logger.Log("Done.");
 
-            this.CaptureFormatComboBox.ItemsSource =
-                await this.conductor.GetCaptureProfiles(devices.First());
-            this.CaptureFormatComboBox.SelectedIndex = 0;
+            //var opts = new MediaOptions(
+            //    new MediaOptions.Init()
+            //    {
+            //        SendVideo = true
+            //    });
+            //this.conductor.SetMediaOptions(opts);
+
+            //this.conductor.UISignaller.ReceivedShutdown += async (s, a) =>
+            //{
+            //    await this.conductor.Shutdown();
+            //};
+
+            //this.conductor.UISignaller.ReceivedPlain += (s, message) =>
+            //{
+            //    Logger.Log(message);
+            //};
+
+            //var devices = await this.conductor.GetVideoDevices();
+            //this.MediaDeviceComboBox.ItemsSource = devices;
+            //this.MediaDeviceComboBox.SelectedIndex = 0;
+
+            //this.CaptureFormatComboBox.ItemsSource =
+            //    await this.conductor.GetCaptureProfiles(devices.First());
+            //this.CaptureFormatComboBox.SelectedIndex = 0;
         }
 
         #region UI_Handlers
@@ -107,7 +128,8 @@ namespace ApolloLensSource
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
             var message = "Hello, World!";
-            await this.conductor.UISignaller.SendPlain(message);
+            //await this.conductor.UISignaller.SendPlain(message);
+            await this.client.SendMessage(this.client.MessageType["Plain"], message);
             Logger.Log($"Send message: {message} to connected peers");
         }
 

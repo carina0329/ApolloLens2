@@ -36,9 +36,9 @@ namespace ApolloLensLibrary.Signalling
         /// <summary>
         /// Sends message to Signaller.
         /// </summary>
-        /// <param name="message">Plaintext message</param>
+        /// <param name="message">JSON encoded message</param>
         /// <returns>Async</returns>
-        Task SendMessage(string message);
+        Task SendMessage(string key, string message);
 
         #endregion
     }
