@@ -97,6 +97,16 @@ namespace ApolloLensClient
                 }
             };
 
+            client.ReceivedMessageExternalHandler += (sender, message) =>
+            {
+                switch (message.Type)
+                {
+                    case "Plain":
+                        Logger.Log(message.Contents);
+                        break;
+                }
+            };
+
             //this.CursorElement.ManipulationDelta += async (s, e) =>
             //{
             //    double newX = (this.t_Transform.TranslateX + e.Delta.Translation.X) / this.RemoteVideo.ActualWidth,
