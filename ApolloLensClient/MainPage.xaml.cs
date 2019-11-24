@@ -2,7 +2,9 @@
 using ApolloLensLibrary.Utilities;
 using ApolloLensLibrary.WebRtc;
 using System;
+using System.Threading.Tasks;
 using WebRtcImplNew;
+using Windows.Media.SpeechRecognition;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -18,12 +20,27 @@ namespace ApolloLensClient
     public sealed partial class MainPage : Page
     {
         private IConductor conductor { get; } = Conductor.Instance;
+        public SpeechRecognizer speechRecognizer = new SpeechRecognizer();
+        private CoreDispatcher dispatcher;
 
         public MainPage()
         {
             this.DataContext = this;
             this.InitializeComponent();
+            string[] responses = { "Zoom", "Minimize" };
+            var listConstraint = new SpeechRecognitionListConstraint(responses, "Resize");
+            speechRecognizer.Constraints.Add(listConstraint);
+            speechRecognizer.ContinuousRecognitionSession.ResultGenerated += ContinuousRecognitionSession_ResultGenerated;
 
+            Logger.WriteMessage += async (message) =>
+            {
+                //var result = await SpeechRec();
+                Console.WriteLine(await SpeechRec());
+            };
+            
+            var result = SpeechRec();
+            Console.WriteLine(result);
+            
 
             Logger.WriteMessage += async (message) =>
             {
@@ -96,6 +113,37 @@ namespace ApolloLensClient
             Logger.Log("Connection started...");
         }
 
+        public async Task<string> SpeechRec() {
+            await speechRecognizer.CompileConstraintsAsync();
+            SpeechRecognitionResult speechRecognitionResult = await speechRecognizer.RecognizeWithUIAsync();
+            Console.WriteLine(speechRecognitionResult);
+            return speechRecognitionResult.Text;
+        }
+
+        private void ContinuousRecognitionSession_ResultGenerated(
+          SpeechContinuousRecognitionSession sender,
+          SpeechContinuousRecognitionResultGeneratedEventArgs args)
+            {
+                
+                if (args.Result.Confidence == SpeechRecognitionConfidence.Medium ||
+                  args.Result.Confidence == SpeechRecognitionConfidence.High)
+                {
+                    Logger.Log(args.Result.Text + " ");
+
+                    //await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                    //{
+                    //    dictationTextBox.Text = dictatedTextBuilder.ToString();
+                    //    btnClearText.IsEnabled = true;
+                    //});
+                }
+                //else
+                //{
+                //    await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                //    {
+                //        dictationTextBox.Text = dictatedTextBuilder.ToString();
+                //    });
+                //}
+        }
         #endregion
     }
 }
