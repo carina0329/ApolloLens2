@@ -22,26 +22,14 @@ namespace ApolloLensClient
     public sealed partial class MainPage : Page
     {
         private IConductor conductor { get; } = Conductor.Instance;
-        public SpeechRecognizer speechRecognizer = new SpeechRecognizer();
+
+        private SpeechRecognizer contSpeechRecognizer;
         private CoreDispatcher dispatcher;
 
         public MainPage()
         {
             this.DataContext = this;
             this.InitializeComponent();
-            string[] responses = { "Zoom In", "Zoom Out", "Maximize", "Exit Full Screen", "Full Screen", "Minimize" };
-            var listConstraint = new SpeechRecognitionListConstraint(responses, "Resize");
-            speechRecognizer.Constraints.Add(listConstraint);
-            speechRecognizer.ContinuousRecognitionSession.ResultGenerated += ContinuousRecognitionSession_ResultGenerated;
-
-            Logger.WriteMessage += async (message) =>
-            {
-                //var result = await SpeechRec();
-                Console.WriteLine(await SpeechRec());
-            };
-            
-            var result = SpeechRec();
-            //Console.WriteLine(result);
             
 
             Logger.WriteMessage += async (message) =>
@@ -51,8 +39,6 @@ namespace ApolloLensClient
                     this.OutputTextBox.Text += message + Environment.NewLine;
                 });
             };
-
-            //Logger.Log(result);
 
             Application.Current.Suspending += async (s, e) =>
             {
@@ -65,6 +51,20 @@ namespace ApolloLensClient
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
             var signaller = new WebsocketSignaller();
+
+            dispatcher = CoreWindow.GetForCurrentThread().Dispatcher;
+            contSpeechRecognizer = new SpeechRecognizer();
+            await contSpeechRecognizer.CompileConstraintsAsync();
+
+            contSpeechRecognizer.HypothesisGenerated += ContSpeechRecognizer_HypothesisGenerated;
+            contSpeechRecognizer.ContinuousRecognitionSession.ResultGenerated +=
+                ContinuousRecognitionSession_ResultGenerated;
+
+
+            contSpeechRecognizer.ContinuousRecognitionSession.Completed += ContinuousRecognitionSession_Completed;
+
+            await contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
+
 
             this.ServerConnectButton.Click += async (s, a) =>
             {
@@ -85,7 +85,7 @@ namespace ApolloLensClient
             var opts = new MediaOptions(
                 new MediaOptions.Init()
                 {
-                    ReceiveVideo = true
+                    ReceiveVideo = false
                 });
             this.conductor.SetMediaOptions(opts);
 
@@ -117,57 +117,56 @@ namespace ApolloLensClient
             Logger.Log("Connection started...");
         }
 
-        public async Task<string> SpeechRec() {
-            await speechRecognizer.CompileConstraintsAsync();
-            SpeechRecognitionResult speechRecognitionResult = await speechRecognizer.RecognizeAsync();
-            Logger.Log(speechRecognitionResult.Text);
-            switch (speechRecognitionResult.Text)
+        private async void ContinuousRecognitionSession_Completed(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionCompletedEventArgs args)
+        {
+            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
-                case "Full Screen":
-                    ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
-                    break;
-                case "Exit Full Screen":
-                    ApplicationView.GetForCurrentView().ExitFullScreenMode();
-                    break;
-                case "Zoom In":
-                    ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 1.5, Height = this.ActualHeight * 1.5));
-                    break;
-                case "Zoom Out":
-                    ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
-                    break;
-                case "Minimize":
-                    this.Hide();
-                    break;
-                case "Maximize":
-                    this.Show();
-                    break;
-            }
-            return speechRecognitionResult.Text;
+                Logger.Log("Timeout.");
+            });
+
+            
+            await contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
         }
 
-        private void ContinuousRecognitionSession_ResultGenerated(
-          SpeechContinuousRecognitionSession sender,
-          SpeechContinuousRecognitionResultGeneratedEventArgs args)
+        private async void ContSpeechRecognizer_HypothesisGenerated(
+            SpeechRecognizer sender, SpeechRecognitionHypothesisGeneratedEventArgs args)
+        {
+            
+            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
-                
-                if (args.Result.Confidence == SpeechRecognitionConfidence.Medium ||
-                  args.Result.Confidence == SpeechRecognitionConfidence.High)
+                Logger.Log(args.Hypothesis.Text);
+                switch (args.Hypothesis.Text)
                 {
-                    Logger.Log(args.Result.Text + " ");
-
-                    //await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                    //{
-                    //    dictationTextBox.Text = dictatedTextBuilder.ToString();
-                    //    btnClearText.IsEnabled = true;
-                    //});
+                    case "full screen":
+                        ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
+                        break;
+                    case "exit full screen":
+                        ApplicationView.GetForCurrentView().ExitFullScreenMode();
+                        break;
+                    case "zoom in":
+                        ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 1.5, Height = this.ActualHeight * 1.5));
+                        break;
+                    case "zoom out":
+                        ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
+                        break;
+                    case "minimize":
+                        this.Hide();
+                        break;
+                    case "maximize":
+                        this.Show();
+                        break;
                 }
-                //else
-                //{
-                //    await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                //    {
-                //        dictationTextBox.Text = dictatedTextBuilder.ToString();
-                //    });
-                //}
+            });
+        }
+
+        private async void ContinuousRecognitionSession_ResultGenerated(
+        SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
+        {
+            
+            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                Logger.Log("Waiting ...");
+            });
         }
         #endregion
     }
