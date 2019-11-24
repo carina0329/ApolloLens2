@@ -1,17 +1,18 @@
 using System;
 using System.IO;
+using Org.WebRtc;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Windows.Storage.Streams;
 using System.Collections.Generic;
 using Windows.Networking.Sockets;
 
-namespace ApolloLensLibrary.Signalling
+namespace ApolloLensLibrary.Signaller
 
 {
     public class SignallerClient : ISignallerClient
     {
-        #region variables
+        #region Variables
 
         /// <summary>
         /// Used for registration with Signaller.
@@ -30,14 +31,15 @@ namespace ApolloLensLibrary.Signalling
 
         /// <summary>
         /// Used to store message type signifiers from Library/Utilities/config.json.
-        /// Must be referenced by any Signaller users to behave appropriately with Signaller.
+        /// Assigns appropriate handlers.
         /// </summary>
-        public Dictionary<string, string> MessageType { get; set; }
+        public Dictionary<string, EventHandler<SignallerMessage>> MessageHandlers { get; set; }
+
         private SignallerMessageProtocol MessageProtocol { get; set; }
 
         #endregion
 
-        #region init
+        #region Initialization
 
         /// <summary>
         /// Constructor. Initializes variables.
@@ -67,19 +69,37 @@ namespace ApolloLensLibrary.Signalling
                     (string)jobj.SelectToken("Signaller.MessageKey"),
                     (string)jobj.SelectToken("Signaller.MessageValue")
                 );
-                this.MessageType = new Dictionary<string, string>();
+                this.MessageHandlers = new Dictionary<string, EventHandler<SignallerMessage>>();
                 JArray messageTypes = (JArray)jobj.SelectToken("Signaller.MessageTypes");
                 foreach (JToken type in messageTypes)
                 {
-                    System.Diagnostics.Debug.WriteLine((string)type);
-                    this.MessageType.Add((string)type, (string)type);
+                    EventHandler<SignallerMessage> assigned = null;
+                    switch ((string)type) {
+                        case "Plain":
+                            assigned = this.ReceivedPlainExternalHandler;
+                            break;
+                        case "Offer":
+                            assigned = this.ReceivedOfferExternalHandler;
+                            break;
+                        case "Answer":
+                            assigned = this.ReceivedAnswerExternalHandler;
+                            break;
+                        case "IceCandidate":
+                            assigned = this.ReceivedIceCandidateExternalHandler;
+                            break;
+                        case "CursorUpdate":
+                            assigned = this.ReceivedCursorUpdateExternalHandler;
+                            break;
+                    }
+
+                    this.MessageHandlers.Add((string)type, assigned);
                 }
             }
         }
 
         #endregion
 
-        #region connection
+        #region Connection
 
         /// <summary>
         /// Connects to Signaller (Server).
@@ -122,7 +142,10 @@ namespace ApolloLensLibrary.Signalling
             this.IsConnected = true;
             System.Diagnostics.Debug.WriteLine("Connected to Signaller.");
 
-            await this.SendMessage(this.MessageType["Register"], this.RegistrationId);
+            // sanity check: is "Register" still in config.json? Otherwise, change this.
+            if (!this.MessageHandlers.ContainsKey("Register"))
+                throw new ArgumentException("Check config.json for changes to Signaller Registration Message Type");
+            await this.SendMessage("Register", this.RegistrationId);
         }
 
         /// <summary>
@@ -149,7 +172,7 @@ namespace ApolloLensLibrary.Signalling
 
         #endregion
 
-        #region messages
+        #region Messages
 
         /// <summary>
         /// Sends message to Signaller.
@@ -160,7 +183,7 @@ namespace ApolloLensLibrary.Signalling
         {
             if (this.WebSocket == null)
                 throw new ArgumentException("Websocket doesn't exist.");
-            if (!this.MessageType.ContainsKey(key))
+            if (!this.MessageHandlers.ContainsKey(key))
                 throw new ArgumentException($"Invalid key {key} used.");
 
             string wrapped = this.MessageProtocol.WrapMessage(key, message);
@@ -192,7 +215,7 @@ namespace ApolloLensLibrary.Signalling
                     dataReader.UnicodeEncoding = UnicodeEncoding.Utf8;
                     string wrapped = dataReader.ReadString(dataReader.UnconsumedBufferLength);
                     SignallerMessage unwrapped = this.MessageProtocol.UnwrapMessage(wrapped);
-                    this.ReceivedMessageExternalHandler?.Invoke(this, unwrapped);
+                    this.MessageHandlers[(string)unwrapped.Type]?.Invoke(this, unwrapped);
                 }
             }
             catch (Exception ex)
@@ -206,9 +229,34 @@ namespace ApolloLensLibrary.Signalling
         }
 
         /// <summary>
-        /// External Handler for received message from Signaller.
+        /// External Handler for Received Plain Message
         /// </summary>
-        public event EventHandler<SignallerMessage> ReceivedMessageExternalHandler;
+        public event EventHandler<SignallerMessage> ReceivedPlainExternalHandler;
+
+        /// <summary>
+        /// External Handler for Received Offer Message
+        /// </summary>
+        public event EventHandler<SignallerMessage> ReceivedOfferExternalHandler;
+
+        /// <summary>
+        /// External Handler for Received Answer Message
+        /// </summary>
+        public event EventHandler<SignallerMessage> ReceivedAnswerExternalHandler;
+
+        /// <summary>
+        /// External Handler for Received Ice Candidate Message
+        /// </summary>
+        public event EventHandler<SignallerMessage> ReceivedIceCandidateExternalHandler;
+
+        /// <summary>
+        /// External Handler for Received WebRTC Shutdown Message
+        /// </summary>
+        public event EventHandler<SignallerMessage> ReceivedShutdownExternalHandler;
+
+        /// <summary>
+        /// External Handler for Received Cursor Update Message
+        /// </summary>
+        public event EventHandler<SignallerMessage> ReceivedCursorUpdateExternalHandler;
 
         #endregion
     }

@@ -73,19 +73,7 @@ namespace ApolloLensLibrary.WebRtc
         /// <returns></returns>
         Task Initialize(ConductorConfig config);
 
-        /// <summary>
-        /// Start a "call" based on the current
-        /// media options
-        /// </summary>
-        /// <returns></returns>
-        Task StartCall();
-
-        /// <summary>
-        /// Shut down a running call, release most 
-        /// resources.
-        /// </summary>
-        /// <returns></returns>
-        Task Shutdown();
+ 
     }
 
     /// <summary>

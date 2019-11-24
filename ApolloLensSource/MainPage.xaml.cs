@@ -1,4 +1,4 @@
-﻿using ApolloLensLibrary.Signalling;
+﻿using ApolloLensLibrary.Signaller;
 using ApolloLensLibrary.Utilities;
 using ApolloLensLibrary.WebRtc;
 using System;

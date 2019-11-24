@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ApolloLensLibrary.Signalling
+namespace ApolloLensLibrary.Signaller
 {
     /// <summary>
     /// Wraps and unwraps messages in JSON format, using a

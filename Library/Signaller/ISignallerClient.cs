@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Windows.Networking.Sockets;
 
-namespace ApolloLensLibrary.Signalling 
+namespace ApolloLensLibrary.Signaller
 {
     /// <summary>
     /// Defines the "signaller" interface.
@@ -15,7 +15,7 @@ namespace ApolloLensLibrary.Signalling
     /// </summary>
     public interface ISignallerClient 
     {
-        #region connection
+        #region Connection
 
         /// <summary>
         /// Connects to Signaller (Server).
@@ -31,7 +31,7 @@ namespace ApolloLensLibrary.Signalling
 
         #endregion
 
-        #region messages
+        #region Messages
 
         /// <summary>
         /// Sends message to Signaller.

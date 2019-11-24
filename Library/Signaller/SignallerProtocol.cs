@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 using System;
 using Windows.Data.Json;
 
-namespace ApolloLensLibrary.Signalling
+namespace ApolloLensLibrary.Signaller
 {
     public class SignallerMessageProtocol : ISignallerMessageProtocol
     {
