@@ -271,9 +271,11 @@ namespace ApolloLensClient
                         break;
                     case "zoom in":
                         ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 1.5, Height = this.ActualHeight * 1.5));
+                        // make sure cursor is in boundary
                         break;
                     case "zoom out":
                         ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
+                        // make sure cursor is in boundary
                         break;
                     case "minimize":
                         this.Hide();
