@@ -86,7 +86,7 @@
             Grid.Column="1"
             HorizontalAlignment="Stretch"
             RealTimePlayback="True" />
-        <Ellipse Name="CursorElement" Height="25" Stroke="Green" Fill="White" Width="25" ManipulationMode = "TranslateX, TranslateY, Scale"
+        <Ellipse Name="CursorElement" Height="35" Stroke="Green" Fill="White" Width="35" ManipulationMode = "TranslateX, TranslateY, Scale"
                    Visibility="Collapsed">
             <Ellipse.RenderTransform>
                 <CompositeTransform x:Name="t_Transform" />
