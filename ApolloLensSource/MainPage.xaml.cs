@@ -1,13 +1,13 @@
 ﻿using ApolloLensLibrary.Signaller;
 using ApolloLensLibrary.Utilities;
 using ApolloLensLibrary.WebRtc;
-using System;
-using System.Linq;
-using WebRtcImplNew;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using System;
+using System.Linq;
+
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -18,8 +18,8 @@ namespace ApolloLensSource
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private IConductor conductor { get; } = Conductor.Instance;
-        private SignallerClient client { get; set; }
+        private SignallerClient client;
+        private WebRtcConductor conductor;
 
         public MainPage()
         {
@@ -36,35 +36,67 @@ namespace ApolloLensSource
 
             Application.Current.Suspending += async (s, e) =>
             {
-                await this.conductor.UISignaller.SendShutdown();
+                await this.conductor.SendShutdown();
                 await this.conductor.Shutdown();
             };
-
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            client = new SignallerClient("source");
+            #region ClientInitialization
 
-            client.ConnectionFailedUIHandler += (s, a) =>
+            this.client = new SignallerClient("source");
+
+            this.client.ConnectionFailedUIHandler += (s, a) =>
             {
                 this.Connected.Hide();
                 this.NotConnected.Show();
             };
 
-            
+            this.client.MessageHandlers["Plain"] += (sender, message) =>
+            {
+                Logger.Log(message.Contents);
+            };
 
-            //var signaller = new WebsocketSignaller("source");
+            #endregion
 
-            //signaller.ConnectionFailed += (s, a) =>
-            //{
-            //    this.Connected.Hide();
-            //    this.NotConnected.Show();
-            //};
+            #region ConductorInitialization
+
+            this.conductor = new WebRtcConductor();
+
+            var config = new WebRtcConductor.Config()
+            {
+                CoreDispatcher = this.Dispatcher,
+                Signaller = client,
+            };
+
+            Logger.Log("Initializing WebRTC...");
+            await this.conductor.Initialize(config);
+            Logger.Log("Done.");
+
+            var opts = new WebRtcConductor.MediaOptions(
+                new WebRtcConductor.MediaOptions.Init()
+                {
+                    SendVideo = true
+                });
+
+            this.conductor.SetMediaOptions(opts);
+
+            var devices = await this.conductor.GetVideoDevices();
+            this.MediaDeviceComboBox.ItemsSource = devices;
+            this.MediaDeviceComboBox.SelectedIndex = 0;
+
+            this.CaptureFormatComboBox.ItemsSource =
+                await this.conductor.GetCaptureProfiles(devices.First());
+            this.CaptureFormatComboBox.SelectedIndex = 0;
+
+            #endregion
+
+            #region LambdaUIHandlers
 
             this.ConnectToServerButton.Click += async (s, a) =>
             {
-                this.NotConnected.Hide();        
+                this.NotConnected.Hide();
                 await client.ConnectToSignaller();
                 if (client.IsConnected) this.Connected.Show();
             };
@@ -76,66 +108,22 @@ namespace ApolloLensSource
                 this.NotConnected.Show();
             };
 
-            client.ReceivedMessageExternalHandler += (sender, message) =>
-            {
-                switch (message.Type)
-                {
-                    case "Plain":
-                        Logger.Log(message.Contents);
-                        break;
-                }
-            };
-
-            //var config = new ConductorConfig()
-            //{
-            //    CoreDispatcher = this.Dispatcher,
-            //    Signaller = signaller,
-            //    Identity = "source"
-            //};
-
-            //Logger.Log("Initializing WebRTC...");
-            //await this.conductor.Initialize(config);
-            //Logger.Log("Done.");
-
-            //var opts = new MediaOptions(
-            //    new MediaOptions.Init()
-            //    {
-            //        SendVideo = true
-            //    });
-            //this.conductor.SetMediaOptions(opts);
-
-            //this.conductor.UISignaller.ReceivedShutdown += async (s, a) =>
-            //{
-            //    await this.conductor.Shutdown();
-            //};
-
-            //this.conductor.UISignaller.ReceivedPlain += (s, message) =>
-            //{
-            //    Logger.Log(message);
-            //};
-
-            //var devices = await this.conductor.GetVideoDevices();
-            //this.MediaDeviceComboBox.ItemsSource = devices;
-            //this.MediaDeviceComboBox.SelectedIndex = 0;
-
-            //this.CaptureFormatComboBox.ItemsSource =
-            //    await this.conductor.GetCaptureProfiles(devices.First());
-            //this.CaptureFormatComboBox.SelectedIndex = 0;
+            #endregion
         }
 
-        #region UI_Handlers
+        #region FunctionalUIHandlers
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
             var message = "Hello, World!";
             //await this.conductor.UISignaller.SendPlain(message);
-            await this.client.SendMessage(this.client.MessageType["Plain"], message);
+            await this.client.SendMessage("Plain", message);
             Logger.Log($"Send message: {message} to connected peers");
         }
 
         private void CaptureFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedProfile = (this.CaptureFormatComboBox.SelectedItem as CaptureProfile);
+            var selectedProfile = (this.CaptureFormatComboBox.SelectedItem as WebRtcConductor.CaptureProfile);
             this.conductor.SetSelectedProfile(selectedProfile);
         }
 
@@ -143,7 +131,7 @@ namespace ApolloLensSource
 
         private async void MediaDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var mediaDevice = (this.MediaDeviceComboBox.SelectedItem as VideoDevice);
+            var mediaDevice = (this.MediaDeviceComboBox.SelectedItem as WebRtcConductor.VideoDevice);
             this.conductor.SetSelectedMediaDevice(mediaDevice);
 
             this.CaptureFormatComboBox.ItemsSource =
