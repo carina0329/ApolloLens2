@@ -120,9 +120,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Conductor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WebRtcSignaller.cs" />
     <EmbeddedResource Include="Properties\WebRtcImplNew.rd.xml" />
   </ItemGroup>
   <ItemGroup>
