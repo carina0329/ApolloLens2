@@ -4,8 +4,10 @@ using ApolloLensLibrary.WebRtc;
 using System;
 using System.Threading.Tasks;
 using WebRtcImplNew;
+using Windows.Foundation;
 using Windows.Media.SpeechRecognition;
 using Windows.UI.Core;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -27,16 +29,10 @@ namespace ApolloLensClient
         {
             this.DataContext = this;
             this.InitializeComponent();
-            string[] responses = { "Zoom", "Minimize" };
+            string[] responses = { "Zoom In", "Zoom Out", "Minimize", "Full Screen", "Exit Full Screen" };
             var listConstraint = new SpeechRecognitionListConstraint(responses, "Resize");
             speechRecognizer.Constraints.Add(listConstraint);
             speechRecognizer.ContinuousRecognitionSession.ResultGenerated += ContinuousRecognitionSession_ResultGenerated;
-
-            Logger.WriteMessage += async (message) =>
-            {
-                //var result = await SpeechRec();
-                Console.WriteLine(await SpeechRec());
-            };
             
             var result = SpeechRec();
             //Console.WriteLine(result);
@@ -119,6 +115,24 @@ namespace ApolloLensClient
             await speechRecognizer.CompileConstraintsAsync();
             SpeechRecognitionResult speechRecognitionResult = await speechRecognizer.RecognizeAsync();
             Logger.Log(speechRecognitionResult.Text);
+            switch(speechRecognitionResult.Text)
+            {
+                case "Full Screen":
+                    ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
+                    break;
+                case "Exit Full Screen":
+                    ApplicationView.GetForCurrentView().ExitFullScreenMode();
+                    break;
+                case "Zoom In":
+                    ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth*1.5, Height = this.ActualHeight*1.5));
+                    break;
+                case "Zoom Out":
+                    ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth*0.5, Height = this.ActualHeight*0.5));
+                    break;
+                case "Minimize":
+                    this.Hide();
+                    break;
+            }
             return speechRecognitionResult.Text;
         }
 
