@@ -152,6 +152,7 @@
     <Compile Include="WebRtc\IConductor.cs" />
     <Compile Include="WebRtc\IWebRtcConductor.cs" />
     <Compile Include="WebRtc\IWebRtcSignaller.cs" />
+    <Compile Include="WebRtc\WebRtcConductor.cs" />
     <EmbeddedResource Include="Properties\Library.rd.xml" />
   </ItemGroup>
   <ItemGroup>
