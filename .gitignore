@@ -264,3 +264,4 @@ paket-files/
 __pycache__/
 *.pyc
 env/
+/Vitals/MainPage.xaml.cs~RFf97846e.TMP

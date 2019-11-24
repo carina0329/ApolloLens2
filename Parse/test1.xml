@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hl7:POLB_IN224200UV01 xmlns:hl7="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ITSVersion="XML_1.0">
+    <hl7:templateId extension="VS_RM200901CO01" assigningAuthorityName="HospitalJorgeHUribe"/>
+    <hl7:id extension="MSG0000001"/>
+    <hl7:creationTime value="20100511220525"/>
+    <hl7:interactionId root="2.16.840.1.113883.1.6" extension="POLB_IN224202UV01"/>
+    <hl7:processingCode code="P"/>
+    <hl7:processingModeCode code="T"/>
+    <hl7:acceptAckCode code="NE"/>
+    <hl7:receiver typeCode="RCV">
+        <hl7:device classCode="DEV" determinerCode="INSTANCE">
+            <hl7:id extension="HIS001"/>
+        </hl7:device>
+    </hl7:receiver>
+    <hl7:sender typeCode="SND">
+        <hl7:device classCode="DEV" determinerCode="INSTANCE">
+            <hl7:id extension="VSM001"/>
+        </hl7:device>
+    </hl7:sender>
+    <hl7:controlActProcess classCode="CACT" moodCode="EVN">
+        <hl7:code code="POLB_TE004202UV01" codeSystem="2.16.840.1.113883.1.11.20299" codeSystemName="LaboratoryTriggerEventType" displayName="Result Complete"/>
+        <hl7:languageCode code="es-co" codeSystem="2.16.840.1.113883.1.11.11526" codeSystemName="HumanLanguage" displayName="Espanol Colombia"/>
+        <hl7:subject typeCode="SUBJ" contextConductionInd="false">
+            <hl7:observationBattery classCode="BATTERY" moodCode="EVN">
+                <hl7:id extension="VS12340000"/>
+                <hl7:code code="28562-7" codeSystem="2.16.840.1.113883.6.1" codeSystemName="LOINC" displayName="Vital Signs"/>
+                <hl7:statusCode code="complete"/>
+                <hl7:recordTarget typeCode="RCT" contextControlCode="OP">
+                    <hl7:patient classCode="PAT">
+                        <hl7:id extension="6537077"/>
+                        <hl7:patientPerson classCode="PSN" determinerCode="INSTANCE">
+                            <hl7:name>
+                                <hl7:given>ANDRES FELIPE</hl7:given>
+                                <hl7:family>FERNANDEZ CORTES</hl7:family>
+                            </hl7:name>
+                            <hl7:administrativeGenderCode code="M" codeSystem="2.16.840.1.113883.5.1" codeSystemName="AdministrativeGender"/>
+                            <hl7:birthTime value="19860705"/>
+                        </hl7:patientPerson>
+                    </hl7:patient>
+                </hl7:recordTarget>
+                <hl7:author typeCode="AUT">
+                    <hl7:time value="20100511220525"/>
+                    <hl7:assignedEntity classCode="ASSIGNED">
+                        <hl7:assignedDevice classCode="DEV" determinerCode="INSTANCE">
+                            <hl7:id extension="VSM001"/>
+                            <hl7:manufacturerModelName code="VSM" codeSystem="BiomedicalDevice" displayName="Vital Signs Monitor"/>
+                        </hl7:assignedDevice>
+                    </hl7:assignedEntity>
+                </hl7:author>
+                <hl7:component1 typeCode="COMP" contextControlCode="AP" contextConductionInd="true">
+                    <hl7:sequenceNumber value="1"/>
+                    <hl7:observationEvent classCode="OBS" moodCode="EVN">
+                        <hl7:code code="271649006" codeSystem="2.16.840.1.113883.6.5" codeSystemName="SNOMED-CT" displayName="Systolic blood pressure"/>
+                        <hl7:statusCode code="complete"/>
+                        <hl7:effectiveTime value="20100511220525"/>
+                        <hl7:value xsi:type="hl7:PQ" value="120" unit="mm[Hg]"/>
+                        <hl7:referenceRange typeCode="REFV">
+                            <hl7:interpretationRange classCode="OBS" moodCode="EVN.CRT">
+                                <hl7:value xsi:type="hl7:ST">90-120</hl7:value>
+                                <hl7:interpretationCode code="H"/>
+                            </hl7:interpretationRange>
+                        </hl7:referenceRange>
+                    </hl7:observationEvent>
+                </hl7:component1>
+                <hl7:component1 typeCode="COMP" contextControlCode="AP" contextConductionInd="true">
+                    <hl7:sequenceNumber value="2"/>
+                    <hl7:observationEvent classCode="OBS" moodCode="EVN">
+                        <hl7:code code="271650006" codeSystem="2.16.840.1.113883.6.5" codeSystemName="SNOMED-CT" displayName="Diastolic blood pressure"/>
+                        <hl7:statusCode code="complete"/>
+                        <hl7:effectiveTime value="20100511220525"/>
+                        <hl7:value xsi:type="hl7:PQ" value="80" unit="mm[Hg]"/>
+                        <hl7:referenceRange typeCode="REFV">
+                            <hl7:interpretationRange classCode="OBS" moodCode="EVN.CRT">
+                                <hl7:value xsi:type="hl7:ST">60-80</hl7:value>
+                                <hl7:interpretationCode code="H"/>
+                            </hl7:interpretationRange>
+                        </hl7:referenceRange>
+                    </hl7:observationEvent>
+                </hl7:component1>
+                <hl7:component1 typeCode="COMP" contextControlCode="AP" contextConductionInd="true">
+                    <hl7:sequenceNumber value="3"/>
+                    <hl7:observationEvent classCode="OBS" moodCode="EVN">
+                        <hl7:code code="6797001" codeSystem="2.16.840.1.113883.6.5" codeSystemName="SNOMED-CT" displayName="Mean blood pressure"/>
+                        <hl7:statusCode code="complete"/>
+                        <hl7:effectiveTime value="20100511220525"/>
+                        <hl7:value xsi:type="hl7:PQ" value="100" unit="mm[Hg]"/>
+                        <hl7:referenceRange typeCode="REFV">
+                            <hl7:interpretationRange classCode="OBS" moodCode="EVN.CRT">
+                                <hl7:value xsi:type="hl7:ST">92-96</hl7:value>
+                                <hl7:interpretationCode code="N"/>
+                            </hl7:interpretationRange>
+                        </hl7:referenceRange>
+                    </hl7:observationEvent>
+                </hl7:component1>
+                <hl7:component1 typeCode="COMP" contextControlCode="AP" contextConductionInd="true">
+                    <hl7:sequenceNumber value="4"/>
+                    <hl7:observationEvent classCode="OBS" moodCode="EVN">
+                        <hl7:code code="386725007" codeSystem="2.16.840.1.113883.6.5" codeSystemName="SNOMED-CT" displayName="Body temperature"/>
+                        <hl7:statusCode code="complete"/>
+                        <hl7:effectiveTime value="20100511220525"/>
+                        <hl7:value xsi:type="hl7:PQ" value="35" unit="C"/>
+                        <hl7:referenceRange typeCode="REFV">
+                            <hl7:interpretationRange classCode="OBS" moodCode="EVN.CRT">
+                                <hl7:value xsi:type="hl7:ST">37</hl7:value>
+                                <hl7:interpretationCode code="N"/>
+                            </hl7:interpretationRange>
+                        </hl7:referenceRange>
+                    </hl7:observationEvent>
+                </hl7:component1>
+                <hl7:component1 typeCode="COMP" contextControlCode="AP" contextConductionInd="true">
+                    <hl7:sequenceNumber value="5"/>
+                    <hl7:observationEvent classCode="OBS" moodCode="EVN">
+                        <hl7:code code="78564009" codeSystem="2.16.840.1.113883.6.5" codeSystemName="SNOMED-CT" displayName="Pulse rate"/>
+                        <hl7:statusCode code="complete"/>
+                        <hl7:effectiveTime value="20100511220525"/>
+                        <hl7:value xsi:type="hl7:PQ" value="56" unit="bpm"/>
+                        <hl7:referenceRange typeCode="REFV">
+                            <hl7:interpretationRange classCode="OBS" moodCode="EVN.CRT">
+                                <hl7:value xsi:type="hl7:ST">60-100</hl7:value>
+                                <hl7:interpretationCode code="N"/>
+                            </hl7:interpretationRange>
+                        </hl7:referenceRange>
+                    </hl7:observationEvent>
+                </hl7:component1>
+                <hl7:component1 typeCode="COMP" contextControlCode="AP" contextConductionInd="true">
+                    <hl7:sequenceNumber value="6"/>
+                    <hl7:observationEvent classCode="OBS" moodCode="EVN">
+                        <hl7:code code="431314004" codeSystem="2.16.840.1.113883.6.5" codeSystemName="SNOMED-CT" displayName="SpO2"/>
+                        <hl7:statusCode code="complete"/>
+                        <hl7:effectiveTime value="20100511220525"/>
+                        <hl7:value xsi:type="hl7:PQ" value="85" unit="%"/>
+                        <hl7:referenceRange typeCode="REFV">
+                            <hl7:interpretationRange classCode="OBS" moodCode="EVN.CRT">
+                                <hl7:value xsi:type="hl7:ST">94-100</hl7:value>
+                                <hl7:interpretationCode code="L"/>
+                            </hl7:interpretationRange>
+                        </hl7:referenceRange>
+                    </hl7:observationEvent>
+                </hl7:component1>
+            </hl7:observationBattery>
+        </hl7:subject>
+    </hl7:controlActProcess>
+</hl7:POLB_IN224200UV01>
