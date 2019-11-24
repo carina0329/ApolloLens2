@@ -90,12 +90,19 @@ wss.on('connection', function connection(ws, request, client) {
             console.log(`Registered connection ${ws.uid} as ${ws.id}`);
             sourceConnections += ws.id === "source";
 
+            // notify all connected devices of new member
+            wss.clients.forEach((client) => {
+                if (client !== ws && client.readyState === ws.OPEN) {
+                    client.send(JSON.stringify({messageKey: messageTypes["Plain"], messageValue: `${ws.id} with uid ${ws.uid} connected to Signaller`}));
+                }
+            });
+
         }
         // plain message. client -> signaller -> source || source -> signaller -> all clients.
         else if (message[messageKey] === messageTypes["Plain"]) {
             wss.clients.forEach((client) => {
                 if (client !== ws && client.id === target && client.readyState === ws.OPEN) {
-                    client.send(message);
+                    client.send(rawMessage);
                 }
             });
         }
@@ -104,7 +111,7 @@ wss.on('connection', function connection(ws, request, client) {
             wss.clients.forEach((client) => {
                 // target = source based on above logic. but this case is an exception, we don't want to send to source.
                 if (client !== ws && client.id != target && client.readyState === ws.OPEN) {
-                    client.send(message);
+                    client.send(rawMessage);
                 }
             })
         }
@@ -113,7 +120,7 @@ wss.on('connection', function connection(ws, request, client) {
             lastPingedClient = ws.uid;
             wss.clients.forEach((client) => {
                 if (client.id === target && client.readyState === ws.OPEN) {
-                    client.send(message);
+                    client.send(rawMessage);
                 }
             });
         }
@@ -121,7 +128,7 @@ wss.on('connection', function connection(ws, request, client) {
         else {
             wss.clients.forEach((client) => {
                 if (client.uid === lastPingedClient && client.readyState === ws.OPEN) {
-                    client.send(message);
+                    client.send(rawMessage);
                 }
             })
         }
