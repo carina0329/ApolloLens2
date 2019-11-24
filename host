@@ -1,0 +1,14 @@
+#!/bin/bash
+file=$1
+mkdir ~/tempTheiaLens
+ip=$(curl bot.whatismyipaddress.com)
+cp $file ~/tempTheiaLens/$ip.jpg
+cd ~/tempTheiaLens
+gpg --yes --batch --passphrase=Bshph8YSt03F2c7CkMe4UL4xSk2EGA+36rd/e9e/whM -c $ip.jpg
+rm $ip.jpg
+touch index.html
+python3 -m http.server &
+sleep 45
+kill %1
+rm -rf ~/tempTheiaLens
+

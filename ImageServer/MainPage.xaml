@@ -1,0 +1,46 @@
+﻿<Page
+    x:Class="ScanServer.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ScanServer"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid>
+        <Button 
+            x:Name="Load"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center"
+            Content="Load Dicom Images From Directory"
+            Click="Load_Click"/>
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            x:Name="StatusPanel"
+            Orientation="Horizontal">
+            <TextBlock
+                VerticalAlignment="Center"
+                Visibility="Collapsed"
+                x:Name="SendingBlock"
+                Text="Sending images..." />
+            <TextBlock
+                Visibility="Collapsed"
+                VerticalAlignment="Center"
+                x:Name="LoadingBlock"
+                Text="Loading images..." />
+            <TextBlock
+                Visibility="Collapsed"
+                VerticalAlignment="Center"
+                x:Name="WaitingBlock"
+                Text="Waiting for connection.." />
+            <ProgressBar
+                Visibility="Collapsed"
+                VerticalAlignment="Center"
+                Width="588"
+                Value="0"
+                Margin="24"
+                x:Name="LoadingBar" />
+        </StackPanel>
+    </Grid>
+</Page>
