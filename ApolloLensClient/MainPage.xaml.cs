@@ -1,9 +1,13 @@
-﻿using ApolloLensLibrary.Signalling;
+using ApolloLensLibrary.Signalling;
 using ApolloLensLibrary.Utilities;
 using ApolloLensLibrary.WebRtc;
 using System;
+using System.Threading.Tasks;
 using WebRtcImplNew;
+using Windows.Foundation;
+using Windows.Media.SpeechRecognition;
 using Windows.UI.Core;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -24,11 +28,15 @@ namespace ApolloLensClient
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
         private ProtocolSignaller<WebRtcSignaller.WebRtcMessage> cursorSignaller = null;
         private const double threshold = 0.48;
+
+        private SpeechRecognizer contSpeechRecognizer;
+        private CoreDispatcher dispatcher;
+
         public MainPage()
         {
             this.DataContext = this;
             this.InitializeComponent();
-
+            
 
             Logger.WriteMessage += async (message) =>
             {
@@ -78,6 +86,20 @@ namespace ApolloLensClient
                 this.StartupSettings.Show();
                 this.CursorElement.Hide();
             };
+
+            dispatcher = CoreWindow.GetForCurrentThread().Dispatcher;
+            contSpeechRecognizer = new SpeechRecognizer();
+            await contSpeechRecognizer.CompileConstraintsAsync();
+
+            contSpeechRecognizer.HypothesisGenerated += ContSpeechRecognizer_HypothesisGenerated;
+            contSpeechRecognizer.ContinuousRecognitionSession.ResultGenerated +=
+                ContinuousRecognitionSession_ResultGenerated;
+
+
+            contSpeechRecognizer.ContinuousRecognitionSession.Completed += ContinuousRecognitionSession_Completed;
+
+            await contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
+
 
             this.ServerConnectButton.Click += async (s, a) =>
             {
@@ -221,6 +243,57 @@ namespace ApolloLensClient
             isProcessing = false;
         }
 
+        private async void ContinuousRecognitionSession_Completed(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionCompletedEventArgs args)
+        {
+            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                Logger.Log("Timeout.");
+            });
+
+            
+            await contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
+        }
+
+        private async void ContSpeechRecognizer_HypothesisGenerated(
+            SpeechRecognizer sender, SpeechRecognitionHypothesisGeneratedEventArgs args)
+        {
+            
+            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                Logger.Log(args.Hypothesis.Text);
+                switch (args.Hypothesis.Text)
+                {
+                    case "full screen":
+                        ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
+                        break;
+                    case "exit full screen":
+                        ApplicationView.GetForCurrentView().ExitFullScreenMode();
+                        break;
+                    case "zoom in":
+                        ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 1.5, Height = this.ActualHeight * 1.5));
+                        break;
+                    case "zoom out":
+                        ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
+                        break;
+                    case "minimize":
+                        this.Hide();
+                        break;
+                    case "maximize":
+                        this.Show();
+                        break;
+                }
+            });
+        }
+
+        private async void ContinuousRecognitionSession_ResultGenerated(
+        SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
+        {
+            
+            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                Logger.Log("Waiting ...");
+            });
+        }
         #endregion
     }
 }

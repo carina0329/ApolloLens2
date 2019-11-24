@@ -1,0 +1,15 @@
+#!/bin/bash
+ip=$1
+status="$(curl -Is --max-time 3 http://$ip:8000/ | head -1)"
+validate=( $status )
+echo $validate
+if [ ${validate[-2]} == "200" ];then
+	echo "OK"
+	echo "http://$ip:8000/$ip.jpg"
+	curl http://$ip:8000/$ip.jpg.gpg --output $ip.jpg.gpg
+	gpg --yes --batch --passphrase=Bshph8YSt03F2c7CkMe4UL4xSk2EGA+36rd/e9e/whM $ip.jpg.gpg
+	rm $ip.jpg.gpg
+else
+	echo "http://$ip:8000/$ip.jpg"
+	echo "NOT RESPONDING"
+fi
