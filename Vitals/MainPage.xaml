@@ -1,0 +1,98 @@
+﻿<Page
+    x:Class="Vitals.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Vitals"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d" d:DesignWidth="0" d:DesignHeight="0"
+    MinHeight="0" MinWidth="0"
+    >
+
+    <Page.Background>
+        <AcrylicBrush TintColor="#000000" TintOpacity="0.1" BackgroundSource="HostBackdrop"/>
+    </Page.Background>
+
+    <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState>
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1000" />
+
+                    </VisualState.StateTriggers>
+
+                    <VisualState.Setters>
+                        <Setter Target="myPanel.Orientation" Value="Horizontal" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <StackPanel Padding="20 0 20 0" Margin="0" Orientation="Vertical">
+            <Button x:Name="revert_button" Click="ClickRevert" ClickMode="Press" Background="White" Content="Revert" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Button.Resources>
+                    <ResourceDictionary>
+                        <ResourceDictionary.ThemeDictionaries>
+                            <ResourceDictionary x:Key="Dark">
+                                <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="LightGray"/>
+                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="White"/>
+                            </ResourceDictionary>
+                            <ResourceDictionary x:Key="Light">
+                                <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="Black"/>
+                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="LightGray"/>
+                            </ResourceDictionary>
+                        </ResourceDictionary.ThemeDictionaries>
+                    </ResourceDictionary>
+                </Button.Resources>
+            </Button>
+            <TextBlock Name="current_time" FontSize="50" Height="75" Foreground="White" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Run Text="{x:Bind Path=current_time_val, Mode=OneWay}"/>
+            </TextBlock>
+        </StackPanel>
+
+        <StackPanel x:Name="myPanel" Orientation="Vertical" Padding="20 70 0 0" VerticalAlignment="Top">
+
+            <Button x:Name="heartrate_button" Click="OnClickHR" ClickMode="Press" Padding="0 0 20 0">
+                <Button.Background>
+                    <SolidColorBrush Opacity="0" />
+                </Button.Background>
+                <TextBlock Name="heartrate" FontSize="100" Foreground="{x:Bind Path=heartrate_color, Mode=OneWay}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Run Text="{x:Bind Path=heartrate_val, Mode=OneWay}"/>
+                    <Run Text="bpm" FontSize="40"/>
+                </TextBlock>
+            </Button>
+
+            <Button x:Name="blood_pressure_button" Click="OnClickBP" ClickMode="Press" Padding="0 0 20 0" >
+                <Button.Background>
+                    <SolidColorBrush Opacity="0" />
+                </Button.Background>
+                <TextBlock Name="blood_pressure" FontSize="100" VariableSizedWrapGrid.RowSpan="2" Foreground="{x:Bind Path=blood_pressure_color, Mode=OneWay}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Run Text="{x:Bind Path=blood_pressure_val, Mode=OneWay}"/>
+                    <Run Text="mmHg" FontSize="40"/>
+                </TextBlock>
+            </Button>
+
+            <Button x:Name="oxygen_button" Click="OnClickO2" ClickMode="Press" Padding="0 0 20 0" >
+                <Button.Background>
+                    <SolidColorBrush Opacity="0" />
+                </Button.Background>
+                <TextBlock Name="oxygen_level" FontSize="100" Foreground="{x:Bind Path=oxygen_color, Mode=OneWay}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Run Text="{x:Bind Path=oxygen_val, Mode=OneWay}"/>
+                <Run Text="%" FontSize="40"/>
+                </TextBlock>
+            </Button>
+
+            <Button x:Name="temperature_button" Click="OnClickT" ClickMode="Press" Padding="0 0 20 0" >
+                <Button.Background>
+                    <SolidColorBrush Opacity="0" />
+                </Button.Background>
+                <TextBlock Name="temperature" FontSize="100" Foreground="{x:Bind Path=temperature_color, Mode=OneWay}" HorizontalAlignment="Left" VerticalAlignment="Stretch">
+                <Run Text="{x:Bind Path=temperature_val, Mode=OneWay}"/>
+                <Run Text="°F" FontSize="40"/>
+                </TextBlock>
+            </Button>
+        </StackPanel>
+        
+    </Grid>
+</Page>

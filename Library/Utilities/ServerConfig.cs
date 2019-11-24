@@ -15,6 +15,7 @@
         public static readonly string AwsAddress = "ws://mrdrhololens-env.k3p7whppy6.us-east-2.elasticbeanstalk.com";
         // public static readonly string AwsAddress = "ws://35.0.22.41";
         // public static readonly string AwsAddress = "ws://Theialens-env.yupqzmga4i.us-east-2.elasticbeanstalk.com";
+        // public static readonly string AwsAddress = "ws://Corolens-env-1.ne75upgwkw.us-east-1.elasticbeanstalk.com/";
 
         /// <summary>
         /// NO LONGER ACTIVE: EXAMPLE ONLY
