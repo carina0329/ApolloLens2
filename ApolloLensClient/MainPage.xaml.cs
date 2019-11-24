@@ -39,7 +39,7 @@ namespace ApolloLensClient
             };
             
             var result = SpeechRec();
-            Console.WriteLine(result);
+            //Console.WriteLine(result);
             
 
             Logger.WriteMessage += async (message) =>
@@ -49,6 +49,8 @@ namespace ApolloLensClient
                     this.OutputTextBox.Text += message + Environment.NewLine;
                 });
             };
+
+            //Logger.Log(result);
 
             Application.Current.Suspending += async (s, e) =>
             {
@@ -115,8 +117,8 @@ namespace ApolloLensClient
 
         public async Task<string> SpeechRec() {
             await speechRecognizer.CompileConstraintsAsync();
-            SpeechRecognitionResult speechRecognitionResult = await speechRecognizer.RecognizeWithUIAsync();
-            Console.WriteLine(speechRecognitionResult);
+            SpeechRecognitionResult speechRecognitionResult = await speechRecognizer.RecognizeAsync();
+            Logger.Log(speechRecognitionResult.Text);
             return speechRecognitionResult.Text;
         }
 
