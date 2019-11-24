@@ -29,7 +29,7 @@ namespace ApolloLensClient
         {
             this.DataContext = this;
             this.InitializeComponent();
-            string[] responses = { "Zoom In", "Zoom Out", "Minimize", "Full Screen", "Exit Full Screen" };
+            string[] responses = { "Zoom In", "Zoom Out", "Minimize", "Full Screen", "Exit Full Screen", "Maximize"};
             var listConstraint = new SpeechRecognitionListConstraint(responses, "Resize");
             speechRecognizer.Constraints.Add(listConstraint);
             speechRecognizer.ContinuousRecognitionSession.ResultGenerated += ContinuousRecognitionSession_ResultGenerated;
@@ -131,6 +131,9 @@ namespace ApolloLensClient
                     break;
                 case "Minimize":
                     this.Hide();
+                    break;
+                case "Maximize":
+                    this.Show();
                     break;
             }
             return speechRecognitionResult.Text;
