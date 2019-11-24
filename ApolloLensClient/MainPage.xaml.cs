@@ -1,4 +1,4 @@
-﻿using ApolloLensLibrary.Signalling;
+using ApolloLensLibrary.Signalling;
 using ApolloLensLibrary.Utilities;
 using ApolloLensLibrary.WebRtc;
 using System;
@@ -29,10 +29,16 @@ namespace ApolloLensClient
         {
             this.DataContext = this;
             this.InitializeComponent();
-            string[] responses = { "Zoom In", "Zoom Out", "Minimize", "Full Screen", "Exit Full Screen", "Maximize"};
+            string[] responses = { "Zoom In", "Zoom Out", "Maximize", "Exit Full Screen", "Full Screen", "Minimize" };
             var listConstraint = new SpeechRecognitionListConstraint(responses, "Resize");
             speechRecognizer.Constraints.Add(listConstraint);
             speechRecognizer.ContinuousRecognitionSession.ResultGenerated += ContinuousRecognitionSession_ResultGenerated;
+
+            Logger.WriteMessage += async (message) =>
+            {
+                //var result = await SpeechRec();
+                Console.WriteLine(await SpeechRec());
+            };
             
             var result = SpeechRec();
             //Console.WriteLine(result);
@@ -115,7 +121,7 @@ namespace ApolloLensClient
             await speechRecognizer.CompileConstraintsAsync();
             SpeechRecognitionResult speechRecognitionResult = await speechRecognizer.RecognizeAsync();
             Logger.Log(speechRecognitionResult.Text);
-            switch(speechRecognitionResult.Text)
+            switch (speechRecognitionResult.Text)
             {
                 case "Full Screen":
                     ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
@@ -124,10 +130,10 @@ namespace ApolloLensClient
                     ApplicationView.GetForCurrentView().ExitFullScreenMode();
                     break;
                 case "Zoom In":
-                    ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth*1.5, Height = this.ActualHeight*1.5));
+                    ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 1.5, Height = this.ActualHeight * 1.5));
                     break;
                 case "Zoom Out":
-                    ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth*0.5, Height = this.ActualHeight*0.5));
+                    ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
                     break;
                 case "Minimize":
                     this.Hide();
