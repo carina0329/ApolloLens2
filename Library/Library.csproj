@@ -136,22 +136,16 @@
     <Compile Include="Imaging\ImageCollection.cs" />
     <Compile Include="Imaging\ImageTransferObject.cs" />
     <Compile Include="Imaging\SmartBitmap.cs" />
-    <Compile Include="Signaller\IBasicSignaller.cs" />
     <Compile Include="Signaller\ISignallerClient.cs" />
     <Compile Include="Signaller\ISignallerProtocol.cs" />
-    <Compile Include="Signaller\MessageProtocol.cs" />
-    <Compile Include="Signaller\ProtocolSignaller.cs" />
     <Compile Include="Signaller\SignallerClient.cs" />
     <Compile Include="Signaller\SignallerProtocol.cs" />
-    <Compile Include="Signaller\WebsocketSignaller.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Logger.cs" />
     <Compile Include="Utilities\ServerConfig.cs" />
     <Compile Include="Utilities\Util.cs" />
     <Compile Include="Utilities\VisibilityExtensions.cs" />
-    <Compile Include="WebRtc\IConductor.cs" />
     <Compile Include="WebRtc\IWebRtcConductor.cs" />
-    <Compile Include="WebRtc\IWebRtcSignaller.cs" />
     <Compile Include="WebRtc\WebRtcConductor.cs" />
     <EmbeddedResource Include="Properties\Library.rd.xml" />
   </ItemGroup>

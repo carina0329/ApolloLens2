@@ -19,7 +19,7 @@ namespace ApolloLensLibrary.WebRtc
     /// (2) Initializes Peer WebRTC Connection
     /// (3) Conducts call
     /// </summary>
-    class WebRtcConductor
+    public class WebRtcConductor
     {
         #region Variables
 
@@ -94,9 +94,10 @@ namespace ApolloLensLibrary.WebRtc
                 "Signaller cannot be null."
             );
 
-            this.Signaller.ReceivedOfferExternalHandler += this.ReceivedOffer;
-            this.Signaller.ReceivedAnswerExternalHandler += this.ReceivedAnswer;
-            this.Signaller.ReceivedIceCandidateExternalHandler += this.ReceivedIceCandidate;
+            this.Signaller.MessageHandlers["Offer"] += this.ReceivedOffer;
+            this.Signaller.MessageHandlers["Answer"] += this.ReceivedAnswer;
+            this.Signaller.MessageHandlers["IceCandidate"] += this.ReceivedIceCandidate;
+            this.Signaller.MessageHandlers["Shutdown"] += this.ReceivedShutdown;
 
             this.LocalVideo = config.LocalVideo;
             this.RemoteVideo = config.RemoteVideo;
@@ -234,7 +235,7 @@ namespace ApolloLensLibrary.WebRtc
         /// </summary>
         /// <param name="device"></param>
         /// <returns></returns>
-        public async Task<IList<CaptureProfile>> GetCaptureProfiles(VideoDevice device)
+        public async Task<IList<WebRtcConductor.CaptureProfile>> GetCaptureProfiles(VideoDevice device)
         {
             var mediaCapture = new MediaCapture();
             var mediaSettings = new MediaCaptureInitializationSettings()
@@ -290,7 +291,7 @@ namespace ApolloLensLibrary.WebRtc
         /// I.e., webcam, capture card, usb webcam
         /// </summary>
         /// <param name="mediaDevice"></param>
-        void SetSelectedMediaDevice(VideoDevice mediaDevice)
+        public void SetSelectedMediaDevice(VideoDevice mediaDevice)
         {
             // video device is global for the source
             this.SelectedDevice = mediaDevice;
@@ -300,7 +301,7 @@ namespace ApolloLensLibrary.WebRtc
         /// Set the desired capture profile.
         /// </summary>
         /// <param name="captureProfile"></param>
-        void SetSelectedProfile(CaptureProfile captureProfile)
+        public void SetSelectedProfile(CaptureProfile captureProfile)
         {
             // capture profile is global for the source
             this.SelectedProfile = captureProfile;
@@ -312,7 +313,7 @@ namespace ApolloLensLibrary.WebRtc
         /// is not configured to support these options.
         /// </summary>
         /// <param name="options"></param>
-        void SetMediaOptions(MediaOptions options)
+        public void SetMediaOptions(MediaOptions options)
         {
             // media options are global for the source
             if (options.LocalLoopback && this.LocalVideo == null)
@@ -508,6 +509,11 @@ namespace ApolloLensLibrary.WebRtc
             var init = JsonConvert.DeserializeObject<RTCIceCandidateInit>(message.Contents);
             RTCIceCandidate candidate = new RTCIceCandidate(init);
             await this.PeerConnections[0].AddIceCandidate(candidate);
+        }
+
+        private async void ReceivedShutdown(object sender, SignallerMessage message)
+        {
+            await this.Shutdown();
         }
 
         #endregion

@@ -73,26 +73,8 @@ namespace ApolloLensLibrary.Signaller
                 JArray messageTypes = (JArray)jobj.SelectToken("Signaller.MessageTypes");
                 foreach (JToken type in messageTypes)
                 {
-                    EventHandler<SignallerMessage> assigned = null;
-                    switch ((string)type) {
-                        case "Plain":
-                            assigned = this.ReceivedPlainExternalHandler;
-                            break;
-                        case "Offer":
-                            assigned = this.ReceivedOfferExternalHandler;
-                            break;
-                        case "Answer":
-                            assigned = this.ReceivedAnswerExternalHandler;
-                            break;
-                        case "IceCandidate":
-                            assigned = this.ReceivedIceCandidateExternalHandler;
-                            break;
-                        case "CursorUpdate":
-                            assigned = this.ReceivedCursorUpdateExternalHandler;
-                            break;
-                    }
-
-                    this.MessageHandlers.Add((string)type, assigned);
+                    EventHandler<SignallerMessage> empty = null;
+                    this.MessageHandlers.Add((string)type, empty);
                 }
             }
         }
@@ -227,36 +209,6 @@ namespace ApolloLensLibrary.Signaller
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
             }
         }
-
-        /// <summary>
-        /// External Handler for Received Plain Message
-        /// </summary>
-        public event EventHandler<SignallerMessage> ReceivedPlainExternalHandler;
-
-        /// <summary>
-        /// External Handler for Received Offer Message
-        /// </summary>
-        public event EventHandler<SignallerMessage> ReceivedOfferExternalHandler;
-
-        /// <summary>
-        /// External Handler for Received Answer Message
-        /// </summary>
-        public event EventHandler<SignallerMessage> ReceivedAnswerExternalHandler;
-
-        /// <summary>
-        /// External Handler for Received Ice Candidate Message
-        /// </summary>
-        public event EventHandler<SignallerMessage> ReceivedIceCandidateExternalHandler;
-
-        /// <summary>
-        /// External Handler for Received WebRTC Shutdown Message
-        /// </summary>
-        public event EventHandler<SignallerMessage> ReceivedShutdownExternalHandler;
-
-        /// <summary>
-        /// External Handler for Received Cursor Update Message
-        /// </summary>
-        public event EventHandler<SignallerMessage> ReceivedCursorUpdateExternalHandler;
 
         #endregion
     }

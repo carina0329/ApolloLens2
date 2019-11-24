@@ -75,4 +75,13 @@ namespace ApolloLensLibrary.Signaller
             this.Contents = contents;
         }
     }
+
+    /// <summary>
+    /// Represents CursorUpdate for Json Encoding.
+    /// </summary>
+    public class CursorUpdate
+    {
+        public double x;
+        public double y;
+    }
 }

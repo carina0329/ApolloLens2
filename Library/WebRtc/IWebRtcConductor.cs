@@ -14,51 +14,12 @@ namespace ApolloLensLibrary.WebRtc
 {
     /// <summary>
     /// WebRtcConductor Interface.
-    /// (1) Initializes Media
+    /// (1) Initializes Media (handled through implementation)
     /// (2) Initializes Peer WebRTC Connection
     /// (3) Conducts call
     /// </summary>
     public interface IWebRtcConductor
     {
-        #region MediaInitializer
-
-        /// <summary>
-        /// Returns all available capture profiles for the
-        /// specified device
-        /// </summary>
-        /// <param name="device"></param>
-        /// <returns></returns>
-        Task<IList<CaptureProfile>> GetCaptureProfiles(VideoDevice device);
-
-        /// <summary>
-        /// Returns all available video capture devices.
-        /// </summary>
-        /// <returns></returns>
-        Task<IList<VideoDevice>> GetVideoDevices();
-
-        /// <summary>
-        /// Set the desired video capture device.
-        /// I.e., webcam, capture card, usb webcam
-        /// </summary>
-        /// <param name="mediaDevice"></param>
-        void SetSelectedMediaDevice(VideoDevice mediaDevice);
-
-        /// <summary>
-        /// Set the desired capture profile.
-        /// </summary>
-        /// <param name="captureProfile"></param>
-        void SetSelectedProfile(CaptureProfile captureProfile);
-
-        /// <summary>
-        /// Set the desired media options.
-        /// Will throw an exception if the conductor
-        /// is not configured to support these options.
-        /// </summary>
-        /// <param name="options"></param>
-        void SetMediaOptions(MediaOptions options);
-
-        #endregion
-
         #region WebRtcInitializer
 
         /// <summary>
