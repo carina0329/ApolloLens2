@@ -245,10 +245,10 @@ namespace ApolloLensClient
 
         private async void ContinuousRecognitionSession_Completed(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionCompletedEventArgs args)
         {
-            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            /*await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 Logger.Log("Timeout.");
-            });
+            });*/
 
             
             await contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
@@ -260,7 +260,7 @@ namespace ApolloLensClient
             
             await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
-                Logger.Log(args.Hypothesis.Text);
+                //Logger.Log(args.Hypothesis.Text);
                 switch (args.Hypothesis.Text)
                 {
                     case "full screen":
@@ -289,10 +289,10 @@ namespace ApolloLensClient
         SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
         {
             
-            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            /*await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 Logger.Log("Waiting ...");
-            });
+            });*/
         }
         #endregion
     }
