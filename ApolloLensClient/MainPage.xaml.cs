@@ -1,13 +1,13 @@
-﻿using ApolloLensLibrary.Signalling;
+﻿using ApolloLensLibrary.Signaller;
 using ApolloLensLibrary.Utilities;
 using ApolloLensLibrary.WebRtc;
-using System;
-using WebRtcImplNew;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
+using Newtonsoft.Json;
+using System;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -18,17 +18,18 @@ namespace ApolloLensClient
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private IConductor conductor { get; } = Conductor.Instance;
+        private SignallerClient client;
+        private WebRtcConductor conductor;
+
         private Boolean isConnectedToSource = false;
-        private WebsocketSignaller signaller = null;
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
-        private ProtocolSignaller<WebRtcSignaller.WebRtcMessage> cursorSignaller = null;
-        private const double threshold = 0.48;
+        
+        private const double cursorThreshold = 0.48;
+
         public MainPage()
         {
             this.DataContext = this;
             this.InitializeComponent();
-
 
             Logger.WriteMessage += async (message) =>
             {
@@ -40,26 +41,20 @@ namespace ApolloLensClient
 
             Application.Current.Suspending += async (s, e) =>
             {
-                await this.conductor.UISignaller.SendShutdown();
+                await this.conductor.SendShutdown();
                 await this.conductor.Shutdown();
             };
-
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            signaller = new WebsocketSignaller("client");
-            var protocol = new MessageProtocol<WebRtcSignaller.WebRtcMessage>();
-            this.cursorSignaller = new ProtocolSignaller<WebRtcSignaller.WebRtcMessage>
-            (
-                signaller,
-                protocol
-            );
-            
-            // Not implemented for source, but necessary here.
-            // EX: signaller connection void before source<=>client connection made.
-            // This could happen if the source was disconnected before direct connection.
-            signaller.ConnectionEnded += async (s, a) =>
+            #region ClientInitialization
+
+            this.client = new SignallerClient("client");
+
+            // Useful if signaller connection void before source <=> client connection established.
+            // For example, if source disconnected prior to direct connection establishment.
+            this.client.ConnectionEndedUIHandler += async (s, a) =>
             {
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                 {
@@ -72,42 +67,82 @@ namespace ApolloLensClient
                 });
             };
 
-            signaller.ConnectionFailed += (s, a) =>
+            this.client.ConnectionFailedUIHandler += async (s, a) =>
             {
-                this.ConnectedOptions.Hide();
-                this.StartupSettings.Show();
-                this.CursorElement.Hide();
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                {
+                    this.ConnectedOptions.Hide();
+                    this.StartupSettings.Show();
+                    this.CursorElement.Hide();
+                });
             };
+
+            this.client.MessageHandlers["Plain"] += (sender, message) =>
+            {
+                Logger.Log(message.Contents);
+            };
+
+            this.client.MessageHandlers["CursorUpdate"] += async (sender, message) =>
+            {
+                var update = JsonConvert.DeserializeObject<CursorUpdate>(message.Contents);
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                {
+                    this.t_Transform.TranslateX = update.x * this.RemoteVideo.ActualWidth;
+                    this.t_Transform.TranslateY = update.y * this.RemoteVideo.ActualHeight;
+                });
+            };
+
+            #endregion
+
+            #region ConductorInitialization
+
+            this.conductor = new WebRtcConductor();
+
+            WebRtcConductor.Config config = new WebRtcConductor.Config()
+            {
+                CoreDispatcher = this.Dispatcher,
+                RemoteVideo = this.RemoteVideo,
+                Signaller = client
+            };
+
+            await this.conductor.Initialize(config);
+
+            var opts = new WebRtcConductor.MediaOptions(
+                new WebRtcConductor.MediaOptions.Init()
+                {
+                    ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
+                    ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
+                    SendAudio = (bool)this.SendAudioCheck.IsChecked
+                });
+
+            this.conductor.SetMediaOptions(opts);
+
+            #endregion
+
+            #region LambdaUIHandlers
 
             this.ServerConnectButton.Click += async (s, a) =>
             {
                 this.StartupSettings.Hide();
-                await signaller.ConnectToServer(ServerConfig.AwsAddress);
+                await this.client.ConnectToSignaller();
                 isConnectedToSource = false;
 
-                if (signaller.connected)
+                if (client.IsConnected)
                 {
                     this.ConnectedOptions.Show();
                     this.CursorElement.Show();
                 }
-            };
-
+            }; 
+            
             this.CursorElement.ManipulationDelta += async (s, e) =>
             {
                 double newX = (this.t_Transform.TranslateX + e.Delta.Translation.X) / this.RemoteVideo.ActualWidth,
                     newY = (this.t_Transform.TranslateY + e.Delta.Translation.Y) / this.RemoteVideo.ActualHeight;
 
-                //Logger.Log("newX: " + newX.ToString() + " newY: " + newY.ToString());
-                if (newX < -threshold || newX > threshold
-                    || newY < -threshold || newY > threshold)
-                {
-                    return;
-                }
-                
                 if (this.isConnectedToSource)
                 {
-                    await this.cursorSignaller.SendMessage(
-                        WebRtcSignaller.WebRtcMessage.CursorUpdate,
+                    await this.client.SendMessage(
+                        "CursorUpdate",
                         "{ x: " + newX.ToString() + ", y: " + newY.ToString() + "}"
                     );
                 }
@@ -115,52 +150,12 @@ namespace ApolloLensClient
                 this.t_Transform.TranslateY += e.Delta.Translation.Y;
             };
 
-            var config = new ConductorConfig()
-            {
-                CoreDispatcher = this.Dispatcher,
-                RemoteVideo = this.RemoteVideo,
-                Signaller = signaller,
-                Identity = "client"
-            };
+            #endregion
 
-            await this.conductor.Initialize(config);
-
-            var opts = new MediaOptions(
-                new MediaOptions.Init()
-                {
-                    ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
-                    ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
-                    SendAudio = (bool)this.SendAudioCheck.IsChecked
-                });
-            this.conductor.SetMediaOptions(opts);
-
-            this.conductor.UISignaller.ReceivedShutdown += async (s, a) =>
-            {
-                await this.conductor.Shutdown();
-            };
-
-            this.conductor.UISignaller.ReceivedPlain += (s, message) =>
-            {
-                Logger.Log(message);
-            };
-
-            this.conductor.UISignaller.ReceivedCursorUpdate += async (s, update) =>
-            {
-                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
-                {
-                    if (update.x < -threshold || update.x > threshold
-                    || update.y < -threshold || update.y > threshold)
-                    {
-                        return;
-                    }
-                    this.t_Transform.TranslateX = update.x * this.RemoteVideo.ActualWidth;
-                    this.t_Transform.TranslateY = update.y * this.RemoteVideo.ActualHeight;
-                });
-            };
         }
 
 
-        #region UI_Handlers        
+        #region FunctionalUIHandlers        
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
@@ -168,7 +163,8 @@ namespace ApolloLensClient
             isProcessing = true;
 
             var message = "Hello, World!";
-            await this.conductor.UISignaller.SendPlain(message);
+            //await this.conductor.UISignaller.SendPlain(message);
+            await this.client.SendMessage("Plain", message);
             Logger.Log($"Sent {message} to any connected peers");
 
             isProcessing = false;
@@ -182,8 +178,8 @@ namespace ApolloLensClient
             if (!isConnectedToSource)
             {
                 Logger.Log("Starting connection to source...");
-                var opts = new MediaOptions(
-                new MediaOptions.Init()
+                var opts = new WebRtcConductor.MediaOptions(
+                new WebRtcConductor.MediaOptions.Init()
                 {
                     ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
                     ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
