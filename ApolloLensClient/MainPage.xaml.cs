@@ -23,6 +23,8 @@ namespace ApolloLensClient
 
         private Boolean isConnectedToSource = false;
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
+        
+        private const double cursorThreshold = 0.48;
 
         public MainPage()
         {
