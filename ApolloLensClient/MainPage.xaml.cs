@@ -87,6 +87,12 @@ namespace ApolloLensClient
                 var update = JsonConvert.DeserializeObject<CursorUpdate>(message.Contents);
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                 {
+                    if (update.x < -cursorThreshold || update.x > cursorThreshold
+                        || update.y < -cursorThreshold || update.y > cursorThreshold)
+                    {
+                        return;
+                    }
+
                     this.t_Transform.TranslateX = update.x * this.RemoteVideo.ActualWidth;
                     this.t_Transform.TranslateY = update.y * this.RemoteVideo.ActualHeight;
                 });
@@ -138,6 +144,13 @@ namespace ApolloLensClient
             {
                 double newX = (this.t_Transform.TranslateX + e.Delta.Translation.X) / this.RemoteVideo.ActualWidth,
                     newY = (this.t_Transform.TranslateY + e.Delta.Translation.Y) / this.RemoteVideo.ActualHeight;
+
+                // prevent sending out of bound data
+                if (newX < -cursorThreshold || newX > cursorThreshold 
+                    || newY < -cursorThreshold || newY > cursorThreshold)
+                {
+                    return;
+                }
 
                 if (this.isConnectedToSource)
                 {
