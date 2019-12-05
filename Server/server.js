@@ -24,6 +24,7 @@ let sourceConnections = 0;
 // last pinged client to ensure server responds to appropriate client
 // when establishing webrtc connections
 let lastPingedClient = -1;
+let lpcLock = 0;
 
 // get configuration from file.
 let messageTypes = {};
@@ -117,7 +118,20 @@ wss.on('connection', function connection(ws, request, client) {
         }
         // webrtc exchange. client -> signaller -> source.
         else if (target === "source") {
-            lastPingedClient = ws.uid;
+
+            if (message[messageKey] === messageTypes["Offer"]) {
+                // ensures only 1 connection at a time
+                if (lpcLock) {
+                    return;
+                }
+                lpcLock = 1;
+                lastPingedClient = ws.uid;
+            }
+
+            if (ws.uid !== lastPingedClient) {
+                return;
+            }
+
             wss.clients.forEach((client) => {
                 if (client.id === target && client.readyState === ws.OPEN) {
                     client.send(rawMessage);
@@ -130,7 +144,11 @@ wss.on('connection', function connection(ws, request, client) {
                 if (client.uid === lastPingedClient && client.readyState === ws.OPEN) {
                     client.send(rawMessage);
                 }
-            })
+            });
+
+            if (message[messageKey] === messageTypes["IceCandidate"]) {
+                lpcLock = 0;
+            }
         }
     });
 
