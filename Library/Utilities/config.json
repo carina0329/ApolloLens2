@@ -6,6 +6,11 @@
         "MessageValue": "MessageContents",
         "MessageTypes" : [
             "Register",
+            "RoomCreate",
+            "RoomChange",
+            "RoomDelete",
+            "RoomPoll",
+            "RoomJoin",
             "Plain",
             "Offer",
             "Answer",
