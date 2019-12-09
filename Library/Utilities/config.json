@@ -1,6 +1,6 @@
 {
     "Signaller" : {
-        "Address": "10.0.0.85",
+        "Address": "35.1.183.149",
 		"Port": "8080",
         "MessageKey" : "MessageType",
         "MessageValue": "MessageContents",

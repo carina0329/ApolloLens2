@@ -69,6 +69,17 @@
                     Click="SayHiButton_Click"
                     Content="Say Hi"
                     Margin="12" />
+                <Button
+                    x:Name="JoinRoomButton"
+                    Click="JoinRoomButton_Click"
+                    Content="Join Room"
+                    Margin="12" />
+                <ComboBox
+                    x:Name="JoinRoomComboBox"
+                    VerticalAlignment="Center"
+                    Margin="12"
+                    SelectionChanged="JoinRoomComboBox_SelectionChanged"
+                    DropDownOpened="JoinRoomComboBox_DropDownOpened" />
             </StackPanel>
             <TextBox
                 Grid.Column="1"

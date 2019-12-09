@@ -36,7 +36,6 @@ namespace ApolloLensSource
 
             Application.Current.Suspending += async (s, e) =>
             {
-                await this.conductor.SendShutdown();
                 await this.conductor.Shutdown();
             };
         }
@@ -47,10 +46,37 @@ namespace ApolloLensSource
 
             this.client = new SignallerClient("source");
 
-            this.client.ConnectionFailedUIHandler += (s, a) =>
+            this.client.ConnectionFailedUIHandler += async (s, a) =>
             {
-                this.Connected.Hide();
-                this.NotConnected.Show();
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    this.Connected.Hide();
+                    this.NotConnected.Show();
+                });
+            };
+
+            this.client.RoomCreateFailedUIHandler += async (s, a) =>
+            {
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    this.StatusText.Text = "Status: Room Creation Failed (either empty room or already exists)";
+                });
+            };
+
+            this.client.RoomJoinSuccessUIHandler += async (s, a) =>
+            {
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    this.StatusText.Text = $"Status: Joined Room {this.client.RoomId}";
+                });
+            };
+
+            this.client.RoomJoinFailedUIHandler += async (s, a) =>
+            {
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    this.StatusText.Text = "Status: Room Join Failed (Nonexistent room or because source already exists)";
+                });
             };
 
             this.client.MessageHandlers["Plain"] += (sender, message) =>
@@ -99,13 +125,15 @@ namespace ApolloLensSource
                 this.NotConnected.Hide();
                 await client.ConnectToSignaller();
                 if (client.IsConnected) this.Connected.Show();
+                this.StatusText.Text = "Status: Connected to Signaller";
             };
 
-            this.DisconnectFromServerButton.Click += (s, a) =>
+            this.DisconnectFromServerButton.Click += async (s, a) =>
             {
                 this.Connected.Hide();
                 client.DisconnectFromSignaller();
                 this.NotConnected.Show();
+                this.StatusText.Text = "Status: Disconnected From Signaller";
             };
 
             #endregion
@@ -115,6 +143,7 @@ namespace ApolloLensSource
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!this.client.IsInRoom()) return;
             var message = "Hello, World!";
             //await this.conductor.UISignaller.SendPlain(message);
             await this.client.SendMessage("Plain", message);
@@ -127,8 +156,6 @@ namespace ApolloLensSource
             this.conductor.SetSelectedProfile(selectedProfile);
         }
 
-        #endregion
-
         private async void MediaDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var mediaDevice = (this.MediaDeviceComboBox.SelectedItem as WebRtcConductor.VideoDevice);
@@ -138,5 +165,19 @@ namespace ApolloLensSource
                 await this.conductor.GetCaptureProfiles(mediaDevice);
             this.CaptureFormatComboBox.SelectedIndex = 0;
         }
+
+        private void CreateRoomButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.CreateRoomTextBox.Text == "Room Name...")
+            {
+                this.StatusText.Text = "Status: Invalid Room Name";
+            }
+            else
+            {
+                this.client.RequestCreateRoom(this.CreateRoomTextBox.Text);
+            }
+        }
+
+        #endregion
     }
 }

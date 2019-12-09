@@ -50,6 +50,14 @@ namespace ApolloLensClient
 
             this.client = new SignallerClient("client");
 
+            this.client.ConnectionSuccessUIHandler += async (s, a) =>
+            {
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    this.client.RequestPollRooms();
+                });
+            };
+
             // Useful if signaller connection void before source <=> client connection established.
             // For example, if source disconnected prior to direct connection establishment.
             this.client.ConnectionEndedUIHandler += async (s, a) =>
@@ -97,6 +105,19 @@ namespace ApolloLensClient
 
                     this.t_Transform.TranslateX = update.x * this.RemoteVideo.ActualWidth;
                     this.t_Transform.TranslateY = update.y * this.RemoteVideo.ActualHeight;
+                });
+            };
+
+            this.client.MessageHandlers["RoomPoll"] += async (sender, message) =>
+            {
+                string[] rooms = message.Contents.Split(',');
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                {
+                    this.JoinRoomComboBox.Items.Clear();
+                    foreach (var room in rooms)
+                    {
+                        this.JoinRoomComboBox.Items.Add(room);
+                    }
                 });
             };
 
@@ -165,7 +186,6 @@ namespace ApolloLensClient
             };
 
             #endregion
-
         }
 
 
@@ -173,6 +193,8 @@ namespace ApolloLensClient
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!this.client.IsInRoom()) return;
+
             if (isProcessing) return;
             isProcessing = true;
 
@@ -185,7 +207,9 @@ namespace ApolloLensClient
         }
 
         private async void SourceConnectButton_Click(object sender, RoutedEventArgs e)
-        {            
+        {
+            if (!this.client.IsInRoom()) return;
+
             if (isProcessing) return;
             isProcessing = true;
 
@@ -227,6 +251,21 @@ namespace ApolloLensClient
             isProcessing = false;
         }
 
+        private void JoinRoomButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.client.RequestJoinRoom(this.JoinRoomComboBox.SelectedValue.ToString());
+        }
+
         #endregion
+
+        private void JoinRoomComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void JoinRoomComboBox_DropDownOpened(object sender, object e)
+        {
+            this.client.RequestPollRooms();
+        }
     }
 }

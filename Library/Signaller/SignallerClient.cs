@@ -17,7 +17,12 @@ namespace ApolloLensLibrary.Signaller
         /// Used for registration with Signaller.
         /// Refers to future WebRTC connection: can be a "client" or "source."
         /// </summary>
-        private string RegistrationId { get; }
+        public string RegistrationId { get; }
+
+        /// <summary>
+        /// Used for room registration with Signaller.
+        /// </summary>
+        public string RoomId { get; set; }
 
         /// <summary>
         /// Signaller address.
@@ -52,6 +57,7 @@ namespace ApolloLensLibrary.Signaller
         public SignallerClient(string id)
         {
             this.RegistrationId = id;
+            this.RoomId = "";
             this.IsConnected = false;
             this.WebSocket = null;
             this.Configure();
@@ -81,6 +87,9 @@ namespace ApolloLensLibrary.Signaller
                     EventHandler<SignallerMessage> empty = null;
                     this.MessageHandlers.Add((string)type, empty);
                 }
+
+                this.MessageHandlers["RoomCreate"] = ReceivedRoomCreateMessage;
+                this.MessageHandlers["RoomJoin"] = ReceivedRoomJoinMessage;
             }
         }
 
@@ -123,6 +132,7 @@ namespace ApolloLensLibrary.Signaller
             this.WebSocket.Close(1000, "");
         }
 
+
         /// <summary>
         /// Handler for connection success.
         /// Registers with Signaller (Server).
@@ -136,6 +146,7 @@ namespace ApolloLensLibrary.Signaller
             if (!this.MessageHandlers.ContainsKey("Register"))
                 throw new ArgumentException("Check config.json for changes to Signaller Registration Message Type");
             await this.SendMessage("Register", this.RegistrationId);
+            this.ConnectionSuccessUIHandler?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -151,12 +162,17 @@ namespace ApolloLensLibrary.Signaller
         }
 
         /// <summary>
+        /// UI Handler for connection success.
+        /// </summary>
+        public event EventHandler ConnectionSuccessUIHandler;
+
+        /// <summary>
         /// UI Handler for connection end.
         /// </summary>
         public event EventHandler ConnectionEndedUIHandler;
 
         /// <summary>
-        /// UI Handler for connection failure.m
+        /// UI Handler for connection failure.
         /// </summary>
         public event EventHandler ConnectionFailedUIHandler;
 
@@ -215,8 +231,97 @@ namespace ApolloLensLibrary.Signaller
                     ex.GetBaseException().HResult
                 );
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
+                this.IsConnected = false;
+                this.ConnectionFailedUIHandler?.Invoke(this, EventArgs.Empty);
             }
         }
+
+        #endregion
+
+        #region Rooms
+
+        /// <summary>
+        /// Determines if the client is currently in a room.
+        /// </summary>
+        public bool IsInRoom()
+        {
+            return this.RoomId != "";
+        }
+
+        /// <summary>
+        /// Sends a room creation request to Signaller (Server).
+        /// Source only.
+        /// </summary>
+        /// <param name="name"></param>
+        public async void RequestCreateRoom(string name)
+        {
+            await this.SendMessage("RoomCreate", name);
+        }
+
+        /// <summary>
+        /// Sends a room poll request to Signaller (Server).
+        /// Client only.
+        /// </summary>
+        public async void RequestPollRooms()
+        {
+            await this.SendMessage("RoomPoll", "");
+        }
+
+        /// <summary>
+        /// Sends a room join request to Signaller (Server).
+        /// Client/Source both.
+        /// </summary>
+        /// <param name="name"></param>
+        public async void RequestJoinRoom(string name)
+        {
+            await this.SendMessage("RoomJoin", name);
+        }
+
+        /// <summary>
+        /// Room Create Message Handler.
+        /// </summary>
+        private void ReceivedRoomCreateMessage(object sender, SignallerMessage message)
+        {
+            if (message.Contents == "")
+            {
+                this.RoomCreateFailedUIHandler?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                this.RequestJoinRoom(message.Contents);
+            }
+        }
+
+        /// <summary>
+        /// Room Join Message Handler.
+        /// </summary>
+        private void ReceivedRoomJoinMessage(object sender, SignallerMessage message)
+        {
+            if (message.Contents == "")
+            {
+                this.RoomJoinFailedUIHandler?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                this.RoomId = message.Contents;
+                this.RoomJoinSuccessUIHandler?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// UI Handler for room creation failure.
+        /// </summary>
+        public event EventHandler RoomCreateFailedUIHandler;
+
+        /// <summary>
+        /// UI Handler for room join failure.
+        /// </summary>
+        public event EventHandler RoomJoinSuccessUIHandler;
+
+        /// <summary>
+        /// UI Handler for room join failure.
+        /// </summary>
+        public event EventHandler RoomJoinFailedUIHandler;
 
         #endregion
     }

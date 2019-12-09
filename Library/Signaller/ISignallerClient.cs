@@ -41,5 +41,32 @@ namespace ApolloLensLibrary.Signaller
         Task SendMessage(string key, string message);
 
         #endregion
+
+        #region Rooms
+
+        /// <summary>
+        /// Determines if the client is in a room.
+        /// </summary>
+        bool IsInRoom();
+
+        /// <summary>
+        /// Sends a room creation request to Signaller (Server).
+        /// Source only.
+        /// </summary>
+        void RequestCreateRoom(string name);
+
+        /// <summary>
+        /// Sends a room poll request to Signaller (Server).
+        /// Client only.
+        /// </summary>
+        void RequestPollRooms();
+
+        /// <summary>
+        /// Sends a room join request to Signaller (Server).
+        /// Client/Source both.
+        /// </summary>
+        void RequestJoinRoom(string name);
+
+        #endregion
     }
 }
