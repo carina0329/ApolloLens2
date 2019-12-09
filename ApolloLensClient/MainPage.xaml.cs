@@ -31,6 +31,7 @@ namespace ApolloLensClient
 
         private SpeechRecognizer contSpeechRecognizer;
         private CoreDispatcher dispatcher;
+        private int zoomCount = 0;
 
         public MainPage()
         {
@@ -263,24 +264,26 @@ namespace ApolloLensClient
                 //Logger.Log(args.Hypothesis.Text);
                 switch (args.Hypothesis.Text)
                 {
-                    case "full screen":
+                    case "maximize":
                         ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
                         break;
-                    case "exit full screen":
+                    case "minimize":
                         ApplicationView.GetForCurrentView().ExitFullScreenMode();
                         break;
                     case "zoom in":
                         ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 1.5, Height = this.ActualHeight * 1.5));
-                        // make sure cursor is in boundary
+                        ++zoomCount;
                         break;
                     case "zoom out":
-                        ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
-                        // make sure cursor is in boundary
+                        if(zoomCount > 0) {
+                            ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.66, Height = this.ActualHeight * 0.66));
+                            --zoomCount;
+                        }
                         break;
-                    case "minimize":
+                    case "hide":
                         this.Hide();
                         break;
-                    case "maximize":
+                    case "show":
                         this.Show();
                         break;
                 }

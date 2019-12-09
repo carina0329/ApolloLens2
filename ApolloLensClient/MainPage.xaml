@@ -5,8 +5,12 @@
     xmlns:local="using:ApolloLensClient"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    mc:Ignorable="d">
+
+
+    <Page.Background>
+        <AcrylicBrush TintColor="#FFFFFF" TintOpacity="0" BackgroundSource="HostBackdrop"/>
+    </Page.Background>
     <Grid>
         <Grid
             x:Name="NotInCall">
@@ -85,6 +89,8 @@
             x:Name="RemoteVideo"
             Grid.Column="1"
             HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Stretch="UniformToFill"
             RealTimePlayback="True" />
         <Ellipse Name="CursorElement" Height="35" Stroke="Green" Fill="White" Width="35" ManipulationMode = "TranslateX, TranslateY, Scale"
                    Visibility="Collapsed">
