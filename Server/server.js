@@ -24,6 +24,7 @@ let sourceConnections = 0;
 // last pinged client to ensure server responds to appropriate client
 // when establishing webrtc connections
 let lastPingedClient = -1;
+let lpcLock = 0;
 
 // get configuration from file.
 let messageTypes = {};
@@ -44,6 +45,9 @@ catch {
 }
 console.log("Loaded configuration from config.json. Current messageTypes:");
 console.log(messageTypes);
+
+// room management
+let rooms = {};
 
 // handler for a new connection to the server
 wss.on('connection', function connection(ws, request, client) {
@@ -68,11 +72,15 @@ wss.on('connection', function connection(ws, request, client) {
             console.log(`Failed to parse json message from ${ws.id} ${ws.uid}`);
         }
 
+        console.log(`==== Message received from ${ws.id} ${ws.uid} ====`);
         console.log(message);
 
         // Return error if messageType is invalid.
         if (message[messageKey] in messageTypes === false) {
-            ws.send(JSON.stringify({messageKey: messageTypes["Plain"], messageValue: "Invalid message type."}));
+            var msg = {};
+            msg[messageKey] = messageTypes["Plain"];
+            msg[messageValue] = "Invalid message type.";
+            ws.send(JSON.stringify(msg));
             return;
         }
 
@@ -90,10 +98,13 @@ wss.on('connection', function connection(ws, request, client) {
             console.log(`Registered connection ${ws.uid} as ${ws.id}`);
             sourceConnections += ws.id === "source";
 
-            // notify all connected devices of new member
+            // notify all connected devices of new member (debug)
             wss.clients.forEach((client) => {
                 if (client !== ws && client.readyState === ws.OPEN) {
-                    client.send(JSON.stringify({messageKey: messageTypes["Plain"], messageValue: `${ws.id} with uid ${ws.uid} connected to Signaller`}));
+                    var msg = {};
+                    msg[messageKey] = messageTypes["Plain"];
+                    msg[messageValue] = `${ws.id} with uid ${ws.uid} connected to Signaller`;
+                    client.send(JSON.stringify(msg));
                 }
             });
 
@@ -117,7 +128,30 @@ wss.on('connection', function connection(ws, request, client) {
         }
         // webrtc exchange. client -> signaller -> source.
         else if (target === "source") {
-            lastPingedClient = ws.uid;
+
+            if (message[messageKey] === messageTypes["Offer"]) {
+                // ensures only 1 connection at a time
+                if (lpcLock) {
+                    return;
+                }
+                lpcLock = 1;
+                lastPingedClient = ws.uid;
+
+                // broadcast connecting client uid to source
+                wss.clients.forEach((client) => {
+                    if (client.id === "source" && client.readyState === ws.OPEN) {
+                        var msg = {};
+                        msg[messageKey] = messageTypes["Register"];
+                        msg[messageValue] = lastPingedClient.toString();
+                        client.send(JSON.stringify(msg));
+                    }
+                })
+            }
+
+            if (ws.uid !== lastPingedClient) {
+                return;
+            }
+
             wss.clients.forEach((client) => {
                 if (client.id === target && client.readyState === ws.OPEN) {
                     client.send(rawMessage);
@@ -130,7 +164,11 @@ wss.on('connection', function connection(ws, request, client) {
                 if (client.uid === lastPingedClient && client.readyState === ws.OPEN) {
                     client.send(rawMessage);
                 }
-            })
+            });
+
+            if (message[messageKey] === messageTypes["IceCandidate"]) {
+                lpcLock = 0;
+            }
         }
     });
 
@@ -142,16 +180,29 @@ wss.on('connection', function connection(ws, request, client) {
         // source expected to stay connected to signaller throughout the call
         // to allow other clients to join at any time.
         if (ws.id === "source") {
-            console.log(`${ws.uid} was a source connection. Dropping all clients.`);
+            console.log(`${ws.uid} was a source connection. Sending shutdown message to all clients.`);
             --sourceConnections;
             wss.clients.forEach((client) => {
                 if (client !== ws) {
-                    console.log(`Dropped connection ${client.id} ${client.uid}`);
-                    client.close(ServerFullCode, ServerFullError);
+                    var msg = {};
+                    msg[messageKey] = messageTypes["Shutdown"];
+                    msg[messageValue] = "";
+                    client.send(JSON.stringify(msg));
+                    console.log(`Sent shutdown to ${client.id} ${client.uid}`);
                 }
-            })
+            });
         }
-        
+        else if (ws.id === "client") {
+            wss.clients.forEach((client) => {
+                if (client.id === "source" && client.readyState === ws.OPEN) {
+                    console.log(`Sending shutdown message for client ${client.uid} to the source`);
+                    var msg = {};
+                    msg[messageKey] = messageTypes["Shutdown"];
+                    msg[messageValue] = ws.uid.toString();
+                    client.send(JSON.stringify(msg));
+                }
+            });
+        }
     });
 });
 
