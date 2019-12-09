@@ -28,7 +28,7 @@
                         Content="Connect to Signalling Server"
                         />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal">
+                <!--<StackPanel Orientation="Horizontal">
                     <CheckBox
                         x:Name="ReceiveAudioCheck"
                         Content="Receive Audio"
@@ -44,7 +44,7 @@
                         Content="Send Audio"
                         IsChecked="False"
                     />
-                </StackPanel>
+                </StackPanel>-->
             </StackPanel>
             <StackPanel
                 x:Name="ConnectedOptions"

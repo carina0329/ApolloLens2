@@ -150,9 +150,7 @@ namespace ApolloLensClient
             var opts = new MediaOptions(
                 new MediaOptions.Init()
                 {
-                    ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
-                    ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
-                    SendAudio = (bool)this.SendAudioCheck.IsChecked
+                    ReceiveVideo = true
                 });
             this.conductor.SetMediaOptions(opts);
 
@@ -207,9 +205,7 @@ namespace ApolloLensClient
                 var opts = new MediaOptions(
                 new MediaOptions.Init()
                 {
-                    ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
-                    ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
-                    SendAudio = (bool)this.SendAudioCheck.IsChecked
+                    ReceiveVideo = true
                 });
                 this.conductor.SetMediaOptions(opts);
                 await this.conductor.StartCall();
