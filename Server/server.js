@@ -20,15 +20,16 @@ const ServerFullError = 'ServerFullError';
 // used for logging
 let uniqueConnectionId = 0;
 
-// 1 source connection invariant
-let sourceConnections = 0;
+// room management
+// room = {
+//    source = null; // holds ws object. room dependent on source, so this maintains 1 source per room invariant.
+//    clients = []; // holds ws objects
+//    lastPingedClient = -1; // ensure server responds to appropriate client for webrtc initialization
+//    lpcLock = 0; // ensure server responds to appropriate client for webrtc initialization
+// }
+let rooms = {};
 
-// last pinged client to ensure server responds to appropriate client
-// when establishing webrtc connections
-let lastPingedClient = -1;
-let lpcLock = 0;
-
-// get configuration from file
+// message configuration
 let messageHandlers = {};
 let messageKey = "";
 let messageValue = "";
@@ -44,123 +45,146 @@ function createMessage(key, val) {
     return JSON.stringify(message);
 }
 
+
 /* Handler Functions */
 
 // REGISTRATION: client -> signaller || source -> signaller
 function registrationHandler(ws) {
     // set id to message contents
     ws.id = ws.message;
-    if ((ws.id !== "source" && ws.id !== "client") || (ws.id === "source" && sourceConnections === 1)) {
+    if (ws.id !== "source" && ws.id !== "client") {
         console.log(`Rejected connection ${ws.id} ${ws.uid}`);
         ws.close(ServerFullCode, ServerFullError);
         return;
     }
 
-    // increment open source connections
     console.log(`Registered connection ${ws.uid} as ${ws.id}`);
-    sourceConnections += ws.id === "source";
-
-    // notify all connected devices of new member (debug)
-    wss.clients.forEach((client) => {
-        if (client !== ws && client.readyState === ws.OPEN) {
-            client.send(createMessage("Plain", `${ws.id} with uid ${ws.uid} connected to Signaller`));
-        }
-    });
 }
 
 // ROOM CREATION: source -> signaller
 function roomCreateHandler(ws) {
+    // error handling: room already exists
+    if (ws.message in rooms || ws.message === "") {
+        console.log(ws.message === "" ? "Empty room name is not allowed." : `Source ${ws.uid} is requesting room ${ws.message}. Already exists.`);
+        ws.send(createMessage("RoomCreate", ""));
+        return;
+    }
 
-}
+    // create default room
+    var room = {
+        source : null,
+        clients : [],
+        lastPingedClient : -1,
+        lpcLock : 0
+    }
 
-// ROOM CHANGE: source -> signaller
-function roomChangeHandler(ws) {
-
-}
-
-// ROOM DELETION: source -> signaller
-function roomDeleteHandler(ws) {
-
+    // adds default room to rooms object & notifies source of success
+    rooms[ws.message] = room;
+    console.log(`${ws.id} ${ws.uid} created room ${ws.message}`);
+    ws.send(createMessage("RoomCreate", ws.message));
 }
 
 // ROOM POLL: client -> signaller
 function roomPollHandler(ws) {
-
+    console.log(`${ws.id} ${ws.uid} polling rooms...`);
+    ws.send(createMessage("RoomPoll", rooms.keys()));
 }
 
 // ROOM JOIN: client -> signaller
 function roomJoinHandler(ws) {
+    // does room exist
+    if (!(ws.message in rooms)) {
+        console.log(`${ws.id} ${ws.uid} requesting to join nonexistent room ${ws.message}`);
+        ws.send(createMessage("RoomJoin", ""));
+    }
+    // room already has a source
+    else if (ws.id === "source" && rooms[ws.message].source !== null) {
+        console.log(`Source ${ws.uid} requesting to join room ${ws.message} but rejected as it already has a source.`);
+        ws.send(createMessage("RoomJoin", ""));
+    }
+    // client attempting to join a room without a source (nondeterministic request)
+    else if (ws.id === "client" && rooms[ws.message].source === null) {
+        console.log(`Client ${ws.uid} requesting to join room ${ws.message} but rejected as it has no source.`);
+        ws.send(createMessage("RoomJoin", ""));
+    }
 
+    // join room
+    ws.rid = ws.message;
+
+    if (ws.id === "source") {
+        rooms[ws.rid].source = ws;
+        // no one to notify as source must be first inhabitant
+    }
+    else {
+        rooms[ws.rid].clients.push(ws);
+        // notify source/clients
+        rooms[ws.rid].source.send(createMessage("Plain", `${ws.id} ${ws.uid} joined room ${ws.rid}`));
+        rooms[ws.rid].clients.forEach(client => {
+            if (client !== ws) client.send(createMessage("Plain", `${ws.id} ${ws.uid} joined room ${ws.rid}`));
+        });
+    }
+
+    // notify requestor of successful join
+    console.log(`${ws.id} ${ws.uid} joined room ${ws.rid}`);
+    ws.send(createMessage("RoomJoin", ws.rid));
 }
 
 // PLAIN MESSAGE: client -> signaller -> source || source -> signaller -> all clients
 function plainMessageHandler(ws) {
-    wss.clients.forEach((client) => {
-        if (client !== ws && client.id === ws.target && client.readyState === ws.OPEN) {
-            client.send(ws.raw);
-        }
-    });
+    if (ws.rid === null) return;
+
+    ws.target === "source" ? rooms[ws.rid].source.send(ws.raw) : rooms[ws.rid].clients.forEach((client => {
+        if (client !== ws) client.send(ws.raw);
+    }));
 }
 
 // OFFER: client -> signaller -> source
 function offerHandler(ws) {
+    if (ws.rid === null) return;
+
     // ensures only 1 connection at a time
-    if (lpcLock) {
-        return;
-    }
-    lpcLock = 1;
-    lastPingedClient = ws.uid;
+    if (rooms[ws.rid].lpcLock) return;
+    rooms[ws.rid].lpcLock = 1;
+    rooms[ws.rid].lastPingedClient = ws.uid;
 
     // broadcast connecting client uid to source
-    // forward offer to source as well
-    wss.clients.forEach((client) => {
-        if (client.id === ws.target && client.readyState === ws.OPEN) {
-            client.send(createMessage("Register", lastPingedClient.toString()));
-            client.send(ws.raw);
-        }
-    });
+    rooms[ws.rid].source.send(createMessage("Register", lastPingedClient.toString()));
+    // forward offer to source
+    rooms[ws.rid].source.send(ws.raw);
 }
 
 // ANSWER: source -> signaller -> specific client
 function answerHandler(ws) {
-    wss.clients.forEach((client) => {
-        if (client.uid === lastPingedClient && client.readyState === ws.OPEN) {
-            client.send(ws.raw);
-        }
+    if (ws.rid === null) return;
+
+    rooms[ws.rid].clients.forEach((client) => {
+        if (client.uid === rooms[ws.rid].lastPingedClient) client.send(ws.raw);
     });
 }
 
 // ICE CANDIDATE: client -> signaller -> source || source -> signaller -> specific client
 function iceCandidateHandler(ws) {
-    if (ws.target === "source") {
-        if (ws.uid !== lastPingedClient) {
-            return;
-        }
+    if (ws.rid === null) return;
 
-        wss.clients.forEach((client) => {
-            if (client.id === ws.target && client.readyState === ws.OPEN) {
-                client.send(ws.raw);
-            }
-        });
+    if (ws.target === "source") {
+        if (ws.uid !== rooms[ws.rid].lastPingedClient) return;
+        rooms[ws.rid].source.send(ws.raw);
     }
     else {
-        wss.clients.forEach((client) => {
-            if (client.uid === lastPingedClient && client.readyState === ws.OPEN) {
-                client.send(ws.raw);
-            }
+        rooms[ws.rid].clients.forEach((client) => {
+            if (client.uid === rooms[ws.rid].lastPingedClient) client.send(ws.raw);
         });
-
-        lpcLock = 0;
+        // release lock
+        rooms[ws.rid].lpcLock = 0;
     }
 }
 
 // CURSOR UPDATE: client -> signaller -> all other clients
 function cursorUpdateHandler(ws) {
-    wss.clients.forEach((client) => {
-        // target = source based on above logic. but this case is an exception, we don't want to send to source.
-        if (client !== ws && client.id != ws.target && client.readyState === ws.OPEN) {
-            client.send(ws.raw);
-        }
+    if (ws.rid === null) return;
+
+    rooms[ws.rid].clients.forEach((client) => {
+        if (client !== ws) client.send(ws.raw);
     });
 }
 
@@ -173,8 +197,6 @@ try {
     // associate proper handlers
     messageHandlers["Register"] = registrationHandler;
     messageHandlers["RoomCreate"] = roomCreateHandler;
-    messageHandlers["RoomChange"] = roomChangeHandler;
-    messageHandlers["RoomDelete"] = roomDeleteHandler;
     messageHandlers["RoomPoll"] = roomPollHandler;
     messageHandlers["RoomJoin"] = roomJoinHandler;
     messageHandlers["Plain"] = plainMessageHandler;
@@ -208,14 +230,16 @@ catch {
 console.log("Loaded configuration from config.json. Current messageTypes:");
 console.log(messageHandlers);
 
+
 /* Connection */
 
 // handler for a new connection to the server
 wss.on('connection', function connection(ws, request, client) {
 
-    // mark this connection uniquely
-    ws.uid = uniqueConnectionId++;
-    ws.id = null;
+    // establish connection identifiers
+    ws.uid = uniqueConnectionId++; // unique connection ID
+    ws.id = null; // "source" or "client"
+    ws.rid = null; // room ID
 
     console.log(`Opened connection ${ws.uid}`);
 
@@ -229,10 +253,11 @@ wss.on('connection', function connection(ws, request, client) {
             message = JSON.parse(rawMessage);
         }
         catch(e) {
-            console.log(`Failed to parse json message from ${ws.id} ${ws.uid}`);
+            console.log(`Failed to parse json message from ${ws.id} ${ws.rid}:${ws.uid}`);
+            return;
         }
 
-        console.log(`==== Message received from ${ws.id} ${ws.uid} ====`);
+        console.log(`==== Message received from ID (${ws.id}) Room:UID (${ws.rid}:${ws.uid}) ====`);
         console.log(message);
 
         // return error if message type is invalid.
@@ -249,28 +274,23 @@ wss.on('connection', function connection(ws, request, client) {
 
     // handler for the socket connection closing
     ws.on('close', () => {
-        console.log(`Closed connection ${ws.id} ${ws.uid}`);
+        console.log(`Closed connection ${ws.id} ${ws.rid}:${ws.uid}`);
 
-        // decrement sourceConnections and drop all clients if source disconnects
-        // source expected to stay connected to signaller throughout the call
-        // to allow other clients to join at any time.
+        // only valid if room ID exists
+        if (ws.rid === null) return;
+
         if (ws.id === "source") {
-            console.log(`${ws.uid} was a source connection. Sending shutdown message to all clients.`);
-            --sourceConnections;
-            wss.clients.forEach((client) => {
-                if (client !== ws) {
-                    client.send(createMessage("Shutdown", ""));
-                    console.log(`Sent shutdown to ${client.id} ${client.uid}`);
-                }
+            console.log(`${ws.rid}:${ws.uid} was source. Shutting down all clients in room ${ws.rid}.`);
+            rooms[ws.rid].clients.forEach((client) => {
+                client.send(createMessage("Shutdown", ""));
+                console.log(`Sent shutdown to ${client.id} ${client.rid}:${client.uid}`);
             });
+
+            delete rooms[ws.rid];
         }
-        else if (ws.id === "client") {
-            wss.clients.forEach((client) => {
-                if (client.id === "source" && client.readyState === ws.OPEN) {
-                    client.send(createMessage("Shutdown", ws.uid.toString()));
-                    console.log(`Sent client ${client.uid} shutdown to the source`);
-                }
-            });
+        else if (ws.id === "client" && rooms[ws.rid].source.readyState === ws.OPEN) {
+            rooms[ws.rid].source.send(createMessage("Shutdown", ws.uid.toString()));
+            console.log(`Sent client ${client.uid} shutdown to the source`);
         }
     });
 });

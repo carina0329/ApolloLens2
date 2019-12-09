@@ -7,8 +7,6 @@
         "MessageTypes" : [
             "Register",
             "RoomCreate",
-            "RoomChange",
-            "RoomDelete",
             "RoomPoll",
             "RoomJoin",
             "Plain",
