@@ -254,12 +254,31 @@ namespace ApolloLensClient
             await contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
         }
 
+        private async void CenterCursor()
+        {
+            Logger.Log("Centering cursor");
+            CursorUpdate update_zoom = new CursorUpdate();
+            update_zoom.x = update_zoom.y = 0;
+            if (update_zoom.x < -threshold || update_zoom.x > threshold
+                || update_zoom.y < -threshold || update_zoom.y > threshold)
+            {
+                return;
+            }
+            this.t_Transform.TranslateX = update_zoom.x * this.RemoteVideo.ActualWidth;
+            this.t_Transform.TranslateY = update_zoom.y * this.RemoteVideo.ActualHeight;
+            await this.cursorSignaller.SendMessage(
+                WebRtcSignaller.WebRtcMessage.CursorUpdate,
+                "{ x: " + update_zoom.x.ToString() + ", y: " + update_zoom.y.ToString() + "}"
+            );
+        }
+
         private async void ContSpeechRecognizer_HypothesisGenerated(
             SpeechRecognizer sender, SpeechRecognitionHypothesisGeneratedEventArgs args)
         {
             
             await dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
+                Logger.Log(args.Hypothesis.Text);
                 //Logger.Log(args.Hypothesis.Text);
                 switch (args.Hypothesis.Text)
                 {
@@ -275,6 +294,7 @@ namespace ApolloLensClient
                         break;
                     case "zoom out":
                         ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
+                        this.CenterCursor();
                         // make sure cursor is in boundary
                         break;
                     case "minimize":
@@ -282,6 +302,32 @@ namespace ApolloLensClient
                         break;
                     case "maximize":
                         this.Show();
+                        break;
+                    case "hide cursor":
+                        Logger.Log("hide cursor");
+                        this.CursorElement.Hide();
+                        break;
+                    case "show cursor":
+                        Logger.Log("show cursor");
+                        this.CursorElement.Show();
+                        break;
+                    case "increase cursor size":
+                        Logger.Log("increase old scale:" + this.CursorElementInner.Scale.ToString());
+                        this.CursorElementInner.Scale += new System.Numerics.Vector3(0.5f);
+                        Logger.Log("new scale:" + this.CursorElementInner.Scale.ToString());
+                        break;
+                    case "decrease cursor size":
+                        Logger.Log("decrease old scale:" + this.CursorElementInner.Scale.ToString());
+                        if (this.CursorElementInner.Scale.X >= 0.5f
+                            && this.CursorElementInner.Scale.Y >= 0.5f
+                            && this.CursorElementInner.Scale.Z >= 0.5f)
+                        {
+                            this.CursorElementInner.Scale -= new System.Numerics.Vector3(0.5f);
+                        }
+                        Logger.Log("new scale:" + this.CursorElementInner.Scale.ToString());
+                        break;
+                    case "center cursor":
+                        this.CenterCursor();
                         break;
                 }
             });
