@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using ApolloLensLibrary.Signaller;
 using Windows.Media.MediaProperties;
 using MediaElement = Windows.UI.Xaml.Controls.MediaElement;
-
+using Windows.UI.Xaml;
 
 namespace ApolloLensLibrary.WebRtc
 {
@@ -36,7 +36,8 @@ namespace ApolloLensLibrary.WebRtc
 
         private CaptureProfile SelectedProfile { get; set; } // global (source)
         private VideoDevice SelectedDevice { get; set; } // global (source)
-        private List<RTCPeerConnection> PeerConnections { get; set; } = new List<RTCPeerConnection>();
+        private Dictionary<string, RTCPeerConnection> PeerConnections { get; set; } = new Dictionary<string, RTCPeerConnection>();
+        private string LastRegisteredPeer { get; set; } = "Self"; // source, will keep changing. client, will not be changed.
 
         #endregion
 
@@ -94,6 +95,7 @@ namespace ApolloLensLibrary.WebRtc
                 "Signaller cannot be null."
             );
 
+            this.Signaller.MessageHandlers["Register"] += this.ReceivedRegistration;
             this.Signaller.MessageHandlers["Offer"] += this.ReceivedOffer;
             this.Signaller.MessageHandlers["Answer"] += this.ReceivedAnswer;
             this.Signaller.MessageHandlers["IceCandidate"] += this.ReceivedIceCandidate;
@@ -452,15 +454,6 @@ namespace ApolloLensLibrary.WebRtc
             await this.Signaller.SendMessage("IceCandidate", message);
         }
 
-        /// <summary>
-        /// WebRTC Establishment: Sends Shutdown.
-        /// </summary>
-        /// <returns></returns>
-        public async Task SendShutdown()
-        {
-            await this.Signaller.SendMessage("Shutdown", "");
-        }
-
         #endregion
 
         #region SignallerMessageReceivedHandlers
@@ -474,15 +467,26 @@ namespace ApolloLensLibrary.WebRtc
         private async void ReceivedOffer(object sender, SignallerMessage message)
         {
             RTCSessionDescription offer = this.DeserializeSessionDescription(message.Contents);
-            this.PeerConnections.Add(await this.BuildPeerConnection(this.MediaOpts));
+            this.PeerConnections.Add(this.LastRegisteredPeer, await this.BuildPeerConnection(this.MediaOpts));
 
-            await this.PeerConnections[this.PeerConnections.Count - 1].SetRemoteDescription(offer);
+            await this.PeerConnections[this.LastRegisteredPeer].SetRemoteDescription(offer);
 
-            var answer = await this.PeerConnections[this.PeerConnections.Count - 1].CreateAnswer(new RTCAnswerOptions());
-            await this.PeerConnections[this.PeerConnections.Count - 1].SetLocalDescription(answer);
+            var answer = await this.PeerConnections[this.LastRegisteredPeer].CreateAnswer(new RTCAnswerOptions());
+            await this.PeerConnections[this.LastRegisteredPeer].SetLocalDescription(answer);
             await this.SendAnswer((RTCSessionDescription)answer);
 
-            this.PeerConnections[this.PeerConnections.Count - 1].OnIceCandidate += this.OnIceCandidate;
+            this.PeerConnections[this.LastRegisteredPeer].OnIceCandidate += this.OnIceCandidate;
+        }
+
+        /// <summary>
+        /// Message Handler: Received Registration ID.
+        /// Source only.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="message"></param>
+        private void ReceivedRegistration(object sender, SignallerMessage message)
+        {
+            this.LastRegisteredPeer = message.Contents.ToString();
         }
 
         /// <summary>
@@ -494,8 +498,8 @@ namespace ApolloLensLibrary.WebRtc
         private async void ReceivedAnswer(object sender, SignallerMessage message)
         {
             RTCSessionDescription answer = this.DeserializeSessionDescription(message.Contents);
-            await this.PeerConnections[0].SetRemoteDescription(answer);
-            this.PeerConnections[0].OnIceCandidate += this.OnIceCandidate;
+            await this.PeerConnections[this.LastRegisteredPeer].SetRemoteDescription(answer);
+            this.PeerConnections[this.LastRegisteredPeer].OnIceCandidate += this.OnIceCandidate;
         }
 
         /// <summary>
@@ -508,12 +512,27 @@ namespace ApolloLensLibrary.WebRtc
         {
             var init = JsonConvert.DeserializeObject<RTCIceCandidateInit>(message.Contents);
             RTCIceCandidate candidate = new RTCIceCandidate(init);
-            await this.PeerConnections[0].AddIceCandidate(candidate);
+            await this.PeerConnections[this.LastRegisteredPeer].AddIceCandidate(candidate);
         }
 
         private async void ReceivedShutdown(object sender, SignallerMessage message)
         {
-            await this.Shutdown();
+            // source -> all clients
+            if (message.Contents == "")
+            {
+                this.Signaller.DisconnectFromSignaller();
+                await this.Shutdown();
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    this.RemoteVideo.Visibility = Visibility.Collapsed;
+                });
+                
+            }
+            // client #message.Contents -> source
+            else
+            {
+                await this.ShutdownIndividual(message.Contents);
+            }
         }
 
         #endregion
@@ -533,6 +552,10 @@ namespace ApolloLensLibrary.WebRtc
                 if (this.MediaOpts.ReceiveVideo)
                 {
                     this.RemoteVideoTrack.Element = MediaElementMaker.Bind(this.RemoteVideo);
+                    this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                    {
+                        this.RemoteVideo.Visibility = Visibility.Visible;
+                    });
                 }
             }
             else if (ev.Track.Kind == "audio")
@@ -574,6 +597,7 @@ namespace ApolloLensLibrary.WebRtc
                     });
 
                 peerConnection.OnTrack += this.OnTrack;
+                peerConnection.OnRemoveTrack += this.OnRemoveTrack;
 
                 if ((mediaOptions.SendVideo || mediaOptions.LocalLoopback) && this.LocalVideoTrack == null)
                 {
@@ -609,11 +633,31 @@ namespace ApolloLensLibrary.WebRtc
             });
         }
 
+        /// <summary>
+        /// Peer Connection Handler.
+        /// On track removed.
+        /// Client only.
+        /// </summary>
+        private void OnRemoveTrack(IRTCTrackEvent ev)
+        {
+            System.Diagnostics.Debug.WriteLine("lol it broke");
+        }
+
         #endregion
 
         /// <summary>
+        /// Determines if a WebRTC call is in progress.
+        /// </summary>
+        /// <returns></returns>
+        public bool CallInProgress()
+        {
+            return this.PeerConnections.Count > 0;
+        }
+
+        /// <summary>
         /// Start a "call" based on the current
-        /// media options
+        /// media options.
+        /// Client only.
         /// </summary>
         /// <returns></returns>
         public async Task StartCall()
@@ -622,7 +666,7 @@ namespace ApolloLensLibrary.WebRtc
             if (this.PeerConnections.Count != 0)
                 throw new Exception("Peer connection already exists.");
 
-            this.PeerConnections.Add(await this.BuildPeerConnection(this.MediaOpts));
+            this.PeerConnections.Add(this.LastRegisteredPeer, await this.BuildPeerConnection(this.MediaOpts));
 
             var connectToPeer =
                 this.MediaOpts.SendAudio ||
@@ -639,10 +683,26 @@ namespace ApolloLensLibrary.WebRtc
                 };
 
                 // because this is the client, only one peer connection will exist.
-                var offer = await this.PeerConnections[0].CreateOffer(offerOptions);
-                await this.PeerConnections[0].SetLocalDescription(offer);
+                var offer = await this.PeerConnections[this.LastRegisteredPeer].CreateOffer(offerOptions);
+                await this.PeerConnections[this.LastRegisteredPeer].SetLocalDescription(offer);
                 await this.SendOffer((RTCSessionDescription)offer);
             }
+        }
+
+        /// <summary>
+        /// Removes an individual WebRtcPeerConnection.
+        /// </summary>
+        /// <returns></returns>
+        private Task ShutdownIndividual(string key)
+        {
+            this.PeerConnections[key].OnIceCandidate -= this.OnIceCandidate;
+            this.PeerConnections[key].OnTrack -= this.OnTrack;
+
+            (this.PeerConnections[key] as IDisposable)?.Dispose();
+
+            this.PeerConnections.Remove(key);
+            
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -653,14 +713,11 @@ namespace ApolloLensLibrary.WebRtc
         /// <returns></returns>
         public Task Shutdown()
         {
-            foreach (RTCPeerConnection pc in this.PeerConnections)
+            List<string> keyList = new List<string>(this.PeerConnections.Keys);
+            foreach (string key in keyList)
             {
-                pc.OnIceCandidate -= this.OnIceCandidate;
-                pc.OnTrack -= this.OnTrack;
-                (pc as IDisposable)?.Dispose();
+                this.ShutdownIndividual(key);
             }
-
-            this.PeerConnections.Clear();
 
             if (this.RemoteVideoTrack != null) this.RemoteVideoTrack.Element = null;
             if (this.LocalVideoTrack != null) this.LocalVideoTrack.Element = null;

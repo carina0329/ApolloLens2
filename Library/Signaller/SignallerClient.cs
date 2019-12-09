@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Org.WebRtc;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Windows.Storage.Streams;
@@ -25,6 +24,11 @@ namespace ApolloLensLibrary.Signaller
         /// </summary>
         /// <value>Needs to be in the form "ws://..." or "wss://..."</value>
         private string Address { get; set; }
+
+        /// <summary>
+        /// Signaller port.
+        /// </summary>
+        private string Port { get; set; }
 
         private MessageWebSocket WebSocket { get; set; }
         public bool IsConnected { get; set; }
@@ -63,7 +67,8 @@ namespace ApolloLensLibrary.Signaller
             {
                 string json = r.ReadToEnd();
                 var jobj = JObject.Parse(json);
-                this.Address = (string)jobj.SelectToken("Signaller.Address");
+                this.Address = "ws://" + (string)jobj.SelectToken("Signaller.Address");
+                this.Port = (string)jobj.SelectToken("Signaller.Port");
                 this.MessageProtocol = new SignallerMessageProtocol
                 (
                     (string)jobj.SelectToken("Signaller.MessageKey"),
@@ -96,7 +101,10 @@ namespace ApolloLensLibrary.Signaller
                 this.WebSocket.Control.MessageType = SocketMessageType.Utf8;
                 this.WebSocket.MessageReceived += this.ReceivedMessage;
                 this.WebSocket.Closed += this.ConnectionEnded;
-                await this.WebSocket.ConnectAsync(new Uri(this.Address));
+                Uri addr = new Uri(this.Address);
+                UriBuilder addrBuilder = new UriBuilder(addr);
+                addrBuilder.Port = Int32.Parse(this.Port);
+                await this.WebSocket.ConnectAsync(addrBuilder.Uri);
                 await this.ConnectionSucceeded();
             }
             catch
@@ -148,7 +156,7 @@ namespace ApolloLensLibrary.Signaller
         public event EventHandler ConnectionEndedUIHandler;
 
         /// <summary>
-        /// UI Handler for connection failure.
+        /// UI Handler for connection failure.m
         /// </summary>
         public event EventHandler ConnectionFailedUIHandler;
 

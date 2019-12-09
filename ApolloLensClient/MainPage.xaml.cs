@@ -21,7 +21,6 @@ namespace ApolloLensClient
         private SignallerClient client;
         private WebRtcConductor conductor;
 
-        private Boolean isConnectedToSource = false;
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
         
         private const double cursorThreshold = 0.48;
@@ -41,7 +40,6 @@ namespace ApolloLensClient
 
             Application.Current.Suspending += async (s, e) =>
             {
-                await this.conductor.SendShutdown();
                 await this.conductor.Shutdown();
             };
         }
@@ -58,11 +56,13 @@ namespace ApolloLensClient
             {
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                 {
-                    if (!isConnectedToSource)
+                    if (!this.conductor.CallInProgress())
                     {
                         this.ConnectedOptions.Hide();
                         this.StartupSettings.Show();
                         this.CursorElement.Hide();
+                        this.SourceDisconnectButton.Hide();
+                        this.SourceConnectButton.Show();
                     }
                 });
             };
@@ -74,6 +74,8 @@ namespace ApolloLensClient
                     this.ConnectedOptions.Hide();
                     this.StartupSettings.Show();
                     this.CursorElement.Hide();
+                    this.SourceDisconnectButton.Hide();
+                    this.SourceConnectButton.Show();
                 });
             };
 
@@ -119,7 +121,7 @@ namespace ApolloLensClient
                     ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
                     ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
                     SendAudio = (bool)this.SendAudioCheck.IsChecked
-                });
+                }); 
 
             this.conductor.SetMediaOptions(opts);
 
@@ -131,7 +133,6 @@ namespace ApolloLensClient
             {
                 this.StartupSettings.Hide();
                 await this.client.ConnectToSignaller();
-                isConnectedToSource = false;
 
                 if (client.IsConnected)
                 {
@@ -152,7 +153,7 @@ namespace ApolloLensClient
                     return;
                 }
 
-                if (this.isConnectedToSource)
+                if (this.conductor.CallInProgress())
                 {
                     await this.client.SendMessage(
                         "CursorUpdate",
@@ -188,20 +189,20 @@ namespace ApolloLensClient
             if (isProcessing) return;
             isProcessing = true;
 
-            if (!isConnectedToSource)
+            if (!this.conductor.CallInProgress())
             {
                 Logger.Log("Starting connection to source...");
                 var opts = new WebRtcConductor.MediaOptions(
-                new WebRtcConductor.MediaOptions.Init()
-                {
-                    ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
-                    ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
-                    SendAudio = (bool)this.SendAudioCheck.IsChecked
-                });
+                    new WebRtcConductor.MediaOptions.Init()
+                    {
+                        ReceiveVideo = (bool)this.ReceiveVideoCheck.IsChecked,
+                        ReceiveAudio = (bool)this.ReceiveAudioCheck.IsChecked,
+                        SendAudio = (bool)this.SendAudioCheck.IsChecked
+                    }
+                );
                 this.conductor.SetMediaOptions(opts);
                 await this.conductor.StartCall();
                 Logger.Log("Connection started...");
-                //signaller.DisconnectFromServer(); Because of async calls, this disconnects too early.
                 this.SayHiButton.Hide();
             } else
             {
@@ -212,12 +213,8 @@ namespace ApolloLensClient
                 this.ConnectedOptions.Hide();
                 this.StartupSettings.Show();
             }
-            isConnectedToSource = !isConnectedToSource;
-            //this.SourceConnectButton.Content = (isConnectedToSource ? "Connect to Source" : "Disconnect from Source");
-            // ^-- this doesn't work but the general logic is that the button should show "Disconnect" or "Connect" depending on its state
 
-            // Temporary workaround: two buttons!
-            if (isConnectedToSource)
+            if (this.conductor.CallInProgress())
             {
                 this.SourceConnectButton.Hide();
                 this.SourceDisconnectButton.Show();

@@ -54,6 +54,12 @@ namespace ApolloLensLibrary.WebRtc
         #region CallConductor
 
         /// <summary>
+        /// Determines if a WebRTC call is in progress.
+        /// </summary>
+        /// <returns></returns>
+        bool CallInProgress();
+
+        /// <summary>
         /// Start a "call" based on the current
         /// media options
         /// </summary>
