@@ -78,6 +78,8 @@ function roomCreateHandler(ws) {
         lpcLock : 0
     }
 
+    ws.createdRoom = ws.message;
+
     // adds default room to rooms object & notifies source of success
     rooms[ws.message] = room;
     console.log(`${ws.id} ${ws.uid} created room ${ws.message}`);
@@ -87,7 +89,8 @@ function roomCreateHandler(ws) {
 // ROOM POLL: client -> signaller
 function roomPollHandler(ws) {
     console.log(`${ws.id} ${ws.uid} polling rooms...`);
-    ws.send(createMessage("RoomPoll", rooms.keys()));
+    console.log(Object.keys(rooms));
+    ws.send(createMessage("RoomPoll", Object.keys(rooms).toString()));
 }
 
 // ROOM JOIN: client -> signaller
@@ -96,16 +99,19 @@ function roomJoinHandler(ws) {
     if (!(ws.message in rooms)) {
         console.log(`${ws.id} ${ws.uid} requesting to join nonexistent room ${ws.message}`);
         ws.send(createMessage("RoomJoin", ""));
+        return;
     }
     // room already has a source
     else if (ws.id === "source" && rooms[ws.message].source !== null) {
         console.log(`Source ${ws.uid} requesting to join room ${ws.message} but rejected as it already has a source.`);
         ws.send(createMessage("RoomJoin", ""));
+        return;
     }
     // client attempting to join a room without a source (nondeterministic request)
     else if (ws.id === "client" && rooms[ws.message].source === null) {
         console.log(`Client ${ws.uid} requesting to join room ${ws.message} but rejected as it has no source.`);
         ws.send(createMessage("RoomJoin", ""));
+        return;
     }
 
     // join room
@@ -148,7 +154,7 @@ function offerHandler(ws) {
     rooms[ws.rid].lastPingedClient = ws.uid;
 
     // broadcast connecting client uid to source
-    rooms[ws.rid].source.send(createMessage("Register", lastPingedClient.toString()));
+    rooms[ws.rid].source.send(createMessage("Register", rooms[ws.rid].lastPingedClient.toString()));
     // forward offer to source
     rooms[ws.rid].source.send(ws.raw);
 }
@@ -240,6 +246,7 @@ wss.on('connection', function connection(ws, request, client) {
     ws.uid = uniqueConnectionId++; // unique connection ID
     ws.id = null; // "source" or "client"
     ws.rid = null; // room ID
+    ws.createdRoom = ""; // if source disconnects after creating a room, but before joining it
 
     console.log(`Opened connection ${ws.uid}`);
 
@@ -277,6 +284,7 @@ wss.on('connection', function connection(ws, request, client) {
         console.log(`Closed connection ${ws.id} ${ws.rid}:${ws.uid}`);
 
         // only valid if room ID exists
+        if (ws.createdRoom !== "" && ws.rid === null) delete rooms[ws.createdRoom];
         if (ws.rid === null) return;
 
         if (ws.id === "source") {
@@ -290,7 +298,7 @@ wss.on('connection', function connection(ws, request, client) {
         }
         else if (ws.id === "client" && rooms[ws.rid].source.readyState === ws.OPEN) {
             rooms[ws.rid].source.send(createMessage("Shutdown", ws.uid.toString()));
-            console.log(`Sent client ${client.uid} shutdown to the source`);
+            console.log(`Sent client ${ws.uid} shutdown to the source`);
         }
     });
 });
