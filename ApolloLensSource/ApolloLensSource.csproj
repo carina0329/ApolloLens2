@@ -140,6 +140,7 @@
     <None Include="ApolloLensSource_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\bg.png" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -168,10 +169,6 @@
     <ProjectReference Include="..\Library\Library.csproj">
       <Project>{8b04d808-dea4-4fba-96d6-ea69ea93920c}</Project>
       <Name>Library</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WebRtcImplNew\WebRtcImplNew.csproj">
-      <Project>{91728066-b8c6-4091-9f91-3500f1c396b1}</Project>
-      <Name>WebRtcImplNew</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

@@ -1,0 +1,20 @@
+{
+    "Signaller" : {
+        "Address": "35.1.183.149",
+		"Port": "8080",
+        "MessageKey" : "MessageType",
+        "MessageValue": "MessageContents",
+        "MessageTypes" : [
+            "Register",
+            "RoomCreate",
+            "RoomPoll",
+            "RoomJoin",
+            "Plain",
+            "Offer",
+            "Answer",
+            "IceCandidate",
+            "Shutdown",
+            "CursorUpdate"
+        ]
+    }
+}
