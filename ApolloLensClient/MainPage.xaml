@@ -78,7 +78,6 @@
                     x:Name="JoinRoomComboBox"
                     VerticalAlignment="Center"
                     Margin="12"
-                    SelectionChanged="JoinRoomComboBox_SelectionChanged"
                     DropDownOpened="JoinRoomComboBox_DropDownOpened" />
             </StackPanel>
             <TextBox
@@ -97,11 +96,12 @@
             Grid.Column="1"
             HorizontalAlignment="Stretch"
             RealTimePlayback="True" />
-        <Ellipse Name="CursorElement" Height="35" Stroke="Green" Fill="White" Width="35" ManipulationMode = "TranslateX, TranslateY, Scale"
-                   Visibility="Collapsed">
-            <Ellipse.RenderTransform>
+        <Border Name="CursorElement" BorderBrush="Transparent" BorderThickness="80" ManipulationMode = "TranslateX, TranslateY, Scale"
+                Height="195" Width="195" Visibility="Collapsed">
+            <SymbolIcon Name="CursorElementInner" Symbol="Go" Foreground="Black" Width="35" Height="35"></SymbolIcon>
+            <Border.RenderTransform>
                 <CompositeTransform x:Name="t_Transform" />
-            </Ellipse.RenderTransform>
-        </Ellipse>
+            </Border.RenderTransform>
+        </Border>
     </Grid>
 </Page>

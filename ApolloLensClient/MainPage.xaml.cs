@@ -188,7 +188,6 @@ namespace ApolloLensClient
             #endregion
         }
 
-
         #region FunctionalUIHandlers        
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
@@ -205,7 +204,6 @@ namespace ApolloLensClient
 
             isProcessing = false;
         }
-
         private async void SourceConnectButton_Click(object sender, RoutedEventArgs e)
         {
             if (!this.client.IsInRoom()) return;
@@ -250,22 +248,34 @@ namespace ApolloLensClient
 
             isProcessing = false;
         }
-
         private void JoinRoomButton_Click(object sender, RoutedEventArgs e)
         {
             this.client.RequestJoinRoom(this.JoinRoomComboBox.SelectedValue.ToString());
         }
-
-        #endregion
 
         private void JoinRoomComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
         }
 
-        private void JoinRoomComboBox_DropDownOpened(object sender, object e)
+        private async void CenterCursor()
         {
-            this.client.RequestPollRooms();
+            Logger.Log("Centering cursor");
+            CursorUpdate update_zoom = new CursorUpdate();
+            update_zoom.x = update_zoom.y = 0;
+            if (update_zoom.x < -cursorThreshold || update_zoom.x > cursorThreshold
+                || update_zoom.y < -cursorThreshold || update_zoom.y > cursorThreshold)
+            {
+                return;
+            }
+            this.t_Transform.TranslateX = update_zoom.x * this.RemoteVideo.ActualWidth;
+            this.t_Transform.TranslateY = update_zoom.y * this.RemoteVideo.ActualHeight;
+            await this.client.SendMessage(
+                "CursorUpdate",
+                "{ x: " + update_zoom.x.ToString() + ", y: " + update_zoom.y.ToString() + "}"
+            );
         }
+
+        #endregion
     }
 }
