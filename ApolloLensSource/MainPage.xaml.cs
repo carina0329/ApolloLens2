@@ -42,6 +42,8 @@ namespace ApolloLensSource
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
+            Logger.Log("Initializing Application.");
+
             #region ClientInitialization
 
             this.client = new SignallerClient("source");
@@ -50,33 +52,35 @@ namespace ApolloLensSource
             {
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
+                    Logger.Log("Failed to connect to Signaller.");
                     this.Connected.Hide();
                     this.NotConnected.Show();
                 });
             };
 
-            this.client.RoomCreateFailedUIHandler += async (s, a) =>
+            this.client.ConnectionSuccessUIHandler += (s, a) =>
             {
-                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                {
-                    this.StatusText.Text = "Status: Room Creation Failed (either empty room or already exists)";
-                });
+                Logger.Log("Connected to Signaller.");
             };
 
-            this.client.RoomJoinSuccessUIHandler += async (s, a) =>
+            this.client.ConnectionEndedUIHandler += (s, a) =>
             {
-                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                {
-                    this.StatusText.Text = $"Status: Joined Room {this.client.RoomId}";
-                });
+                Logger.Log("Disconnected from Signaller.");
             };
 
-            this.client.RoomJoinFailedUIHandler += async (s, a) =>
+            this.client.RoomCreateFailedUIHandler += (s, a) =>
             {
-                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                {
-                    this.StatusText.Text = "Status: Room Join Failed (Nonexistent room or because source already exists)";
-                });
+                Logger.Log("Room Creation Failed (either empty room or already exists).");
+            };
+
+            this.client.RoomJoinSuccessUIHandler += (s, a) =>
+            {
+                Logger.Log($"Joined Room {this.client.RoomId}.");
+            };
+
+            this.client.RoomJoinFailedUIHandler += (s, a) =>
+            {
+                Logger.Log("Room Join Failed (Nonexistent room or because source already exists).");
             };
 
             this.client.MessageHandlers["Plain"] += (sender, message) =>
@@ -96,9 +100,7 @@ namespace ApolloLensSource
                 Signaller = client,
             };
 
-            Logger.Log("Initializing WebRTC...");
             await this.conductor.Initialize(config);
-            Logger.Log("Done.");
 
             var opts = new WebRtcConductor.MediaOptions(
                 new WebRtcConductor.MediaOptions.Init()
@@ -125,7 +127,6 @@ namespace ApolloLensSource
                 this.NotConnected.Hide();
                 await client.ConnectToSignaller();
                 if (client.IsConnected) this.Connected.Show();
-                this.StatusText.Text = "Status: Connected to Signaller";
             };
 
             this.DisconnectFromServerButton.Click += async (s, a) =>
@@ -133,10 +134,11 @@ namespace ApolloLensSource
                 this.Connected.Hide();
                 client.DisconnectFromSignaller();
                 this.NotConnected.Show();
-                this.StatusText.Text = "Status: Disconnected From Signaller";
             };
 
             #endregion
+
+            Logger.Log("Done.");
         }
 
         #region FunctionalUIHandlers
@@ -145,9 +147,8 @@ namespace ApolloLensSource
         {
             if (!this.client.IsInRoom()) return;
             var message = "Hello, World!";
-            //await this.conductor.UISignaller.SendPlain(message);
             await this.client.SendMessage("Plain", message);
-            Logger.Log($"Send message: {message} to connected peers");
+            Logger.Log($"Sent message: {message} to connected peers.");
         }
 
         private void CaptureFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -168,13 +169,15 @@ namespace ApolloLensSource
 
         private void CreateRoomButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!this.client.IsConnected) return;
             if (this.CreateRoomTextBox.Text == "Room Name...")
             {
-                this.StatusText.Text = "Status: Invalid Room Name";
+                Logger.Log("Invalid Room Name.");
             }
             else
             {
                 this.client.RequestCreateRoom(this.CreateRoomTextBox.Text);
+                Logger.Log($"Sent request to create room {this.CreateRoomTextBox.Text}");
             }
         }
 

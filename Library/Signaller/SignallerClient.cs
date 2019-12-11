@@ -187,8 +187,8 @@ namespace ApolloLensLibrary.Signaller
         /// <returns>Async</returns>
         public async Task SendMessage(string key, string message)
         {
-            if (this.WebSocket == null)
-                throw new ArgumentException("Websocket doesn't exist.");
+            if (!this.IsConnected || this.WebSocket == null)
+                return;
             if (!this.MessageHandlers.ContainsKey(key))
                 throw new ArgumentException($"Invalid key {key} used.");
 
