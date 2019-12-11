@@ -52,22 +52,33 @@ namespace ApolloLensSource
             {
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
+                    Logger.Log("Failed to connect to Signaller.");
                     this.Connected.Hide();
                     this.NotConnected.Show();
                 });
             };
 
-            this.client.RoomCreateFailedUIHandler += async (s, a) =>
+            this.client.ConnectionSuccessUIHandler += (s, a) =>
+            {
+                Logger.Log("Connected to Signaller.");
+            };
+
+            this.client.ConnectionEndedUIHandler += (s, a) =>
+            {
+                Logger.Log("Disconnected from Signaller.");
+            };
+
+            this.client.RoomCreateFailedUIHandler += (s, a) =>
             {
                 Logger.Log("Room Creation Failed (either empty room or already exists).");
             };
 
-            this.client.RoomJoinSuccessUIHandler += async (s, a) =>
+            this.client.RoomJoinSuccessUIHandler += (s, a) =>
             {
                 Logger.Log($"Joined Room {this.client.RoomId}.");
             };
 
-            this.client.RoomJoinFailedUIHandler += async (s, a) =>
+            this.client.RoomJoinFailedUIHandler += (s, a) =>
             {
                 Logger.Log("Room Join Failed (Nonexistent room or because source already exists).");
             };
@@ -116,7 +127,6 @@ namespace ApolloLensSource
                 this.NotConnected.Hide();
                 await client.ConnectToSignaller();
                 if (client.IsConnected) this.Connected.Show();
-                Logger.Log("Connected to Signaller.");
             };
 
             this.DisconnectFromServerButton.Click += async (s, a) =>
@@ -124,7 +134,6 @@ namespace ApolloLensSource
                 this.Connected.Hide();
                 client.DisconnectFromSignaller();
                 this.NotConnected.Show();
-                Logger.Log("Disconnected From Signaller.");
             };
 
             #endregion
@@ -138,7 +147,6 @@ namespace ApolloLensSource
         {
             if (!this.client.IsInRoom()) return;
             var message = "Hello, World!";
-            //await this.conductor.UISignaller.SendPlain(message);
             await this.client.SendMessage("Plain", message);
             Logger.Log($"Sent message: {message} to connected peers.");
         }
@@ -161,6 +169,7 @@ namespace ApolloLensSource
 
         private void CreateRoomButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!this.client.IsConnected) return;
             if (this.CreateRoomTextBox.Text == "Room Name...")
             {
                 Logger.Log("Invalid Room Name.");
