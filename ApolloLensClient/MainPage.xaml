@@ -18,7 +18,7 @@
             <StackPanel
                 x:Name="StartupSettings"
                 Grid.Column="0"
-                Visibility="Visible"
+                Visibility="Collapsed"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 Orientation="Vertical">
@@ -28,23 +28,6 @@
                         Content="Connect to Signalling Server"
                         />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <CheckBox
-                        x:Name="ReceiveAudioCheck"
-                        Content="Receive Audio"
-                        IsChecked="True"
-                    />
-                    <CheckBox
-                        x:Name="ReceiveVideoCheck"
-                        Content="Receive Video"
-                        IsChecked="True"
-                    />
-                    <CheckBox
-                        x:Name="SendAudioCheck"
-                        Content="Send Audio"
-                        IsChecked="False"
-                    />
-                </StackPanel>
             </StackPanel>
             <StackPanel
                 x:Name="ConnectedOptions"
@@ -52,7 +35,7 @@
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 Orientation="Horizontal"
-                Visibility="Collapsed">
+                Visibility="Visible">
                 <Button
                     x:Name="SourceConnectButton"
                     Content="Connect to Source"
@@ -97,7 +80,7 @@
             HorizontalAlignment="Stretch"
             RealTimePlayback="True" />
         <Border Name="CursorElement" BorderBrush="Transparent" BorderThickness="80" ManipulationMode = "TranslateX, TranslateY, Scale"
-                Height="195" Width="195" Visibility="Collapsed">
+                Height="195" Width="195" Visibility="Collapsed" Margin="125,403,1180,402">
             <SymbolIcon Name="CursorElementInner" Symbol="Go" Foreground="Black" Width="35" Height="35"></SymbolIcon>
             <Border.RenderTransform>
                 <CompositeTransform x:Name="t_Transform" />
