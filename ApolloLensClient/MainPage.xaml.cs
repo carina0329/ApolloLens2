@@ -25,6 +25,7 @@ namespace ApolloLensClient
         private WebRtcConductor conductor;
 
         private SpeechRecognizer contSpeechRecognizer;
+        private int zoomCount = 0; /* Make sure the user doesn't zoom out more than the original zoom */
 
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
         
@@ -393,13 +394,16 @@ namespace ApolloLensClient
                         ApplicationView.GetForCurrentView().ExitFullScreenMode();
                         break;
                     case "zoom in":
-                        ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 1.5, Height = this.ActualHeight * 1.5));
-                        // make sure cursor is in boundary	
+                        ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 2, Height = this.ActualHeight * 2));
+                        ++zoomCount;
                         break;
                     case "zoom out":
-                        ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
-                        this.CenterCursor();
-                        // make sure cursor is in boundary	
+                        if (zoomCount > 0)
+                        {
+                            ApplicationView.GetForCurrentView().TryResizeView(new Size(Width = this.ActualWidth * 0.5, Height = this.ActualHeight * 0.5));
+                            this.CenterCursor();
+                            --zoomCount;
+                        }
                         break;
                     case "minimize":
                         this.Hide();

@@ -149,6 +149,8 @@
             x:Name="RemoteVideo"
             Grid.Column="1"
             HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Stretch="UniformToFill"
             RealTimePlayback="True" />
         <StackPanel
             x:Name="CursorPanel"
