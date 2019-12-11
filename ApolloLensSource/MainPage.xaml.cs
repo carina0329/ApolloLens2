@@ -1,13 +1,13 @@
-﻿using ApolloLensLibrary.Signalling;
+﻿using ApolloLensLibrary.Signaller;
 using ApolloLensLibrary.Utilities;
 using ApolloLensLibrary.WebRtc;
-using System;
-using System.Linq;
-using WebRtcImplNew;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using System;
+using System.Linq;
+
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -18,7 +18,8 @@ namespace ApolloLensSource
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private IConductor conductor { get; } = Conductor.Instance;
+        private SignallerClient client;
+        private WebRtcConductor conductor;
 
         public MainPage()
         {
@@ -35,63 +36,79 @@ namespace ApolloLensSource
 
             Application.Current.Suspending += async (s, e) =>
             {
-                await this.conductor.UISignaller.SendShutdown();
                 await this.conductor.Shutdown();
             };
-
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
-            var signaller = new WebsocketSignaller("source");
+            Logger.Log("Initializing Application.");
 
-            signaller.ConnectionFailed += (s, a) =>
+            #region ClientInitialization
+
+            this.client = new SignallerClient("source");
+
+            this.client.ConnectionFailedUIHandler += async (s, a) =>
             {
-                this.Connected.Hide();
-                this.NotConnected.Show();
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    Logger.Log("Failed to connect to Signaller.");
+                    this.Connected.Hide();
+                    this.NotConnected.Show();
+                });
             };
 
-            this.ConnectToServerButton.Click += async (s, a) =>
+            this.client.ConnectionSuccessUIHandler += (s, a) =>
             {
-                this.NotConnected.Hide();        
-                await signaller.ConnectToServer(ServerConfig.AwsAddress);
-                if (signaller.connected) this.Connected.Show();
+                Logger.Log("Connected to Signaller.");
             };
 
-            this.DisconnectFromServerButton.Click += (s, a) =>
+            this.client.ConnectionEndedUIHandler += (s, a) =>
             {
-                this.Connected.Hide();
-                signaller.DisconnectFromServer();
-                this.NotConnected.Show();
+                Logger.Log("Disconnected from Signaller.");
             };
 
-            var config = new ConductorConfig()
+            this.client.RoomCreateFailedUIHandler += (s, a) =>
+            {
+                Logger.Log("Room Creation Failed (either empty room or already exists).");
+            };
+
+            this.client.RoomJoinSuccessUIHandler += (s, a) =>
+            {
+                Logger.Log($"Joined Room {this.client.RoomId}.");
+            };
+
+            this.client.RoomJoinFailedUIHandler += (s, a) =>
+            {
+                Logger.Log("Room Join Failed (Nonexistent room or because source already exists).");
+            };
+
+            this.client.MessageHandlers["Plain"] += (sender, message) =>
+            {
+                Logger.Log(message.Contents);
+            };
+
+            #endregion
+
+            #region ConductorInitialization
+
+            this.conductor = new WebRtcConductor();
+
+            var config = new WebRtcConductor.Config()
             {
                 CoreDispatcher = this.Dispatcher,
-                Signaller = signaller,
-                Identity = "source"
+                Signaller = client,
             };
 
-            Logger.Log("Initializing WebRTC...");
             await this.conductor.Initialize(config);
-            Logger.Log("Done.");
 
-            var opts = new MediaOptions(
-                new MediaOptions.Init()
+            var opts = new WebRtcConductor.MediaOptions(
+                new WebRtcConductor.MediaOptions.Init()
                 {
                     SendVideo = true
                 });
+
             this.conductor.SetMediaOptions(opts);
-
-            this.conductor.UISignaller.ReceivedShutdown += async (s, a) =>
-            {
-                await this.conductor.Shutdown();
-            };
-
-            this.conductor.UISignaller.ReceivedPlain += (s, message) =>
-            {
-                Logger.Log(message);
-            };
 
             var devices = await this.conductor.GetVideoDevices();
             this.MediaDeviceComboBox.ItemsSource = devices;
@@ -100,33 +117,70 @@ namespace ApolloLensSource
             this.CaptureFormatComboBox.ItemsSource =
                 await this.conductor.GetCaptureProfiles(devices.First());
             this.CaptureFormatComboBox.SelectedIndex = 0;
+
+            #endregion
+
+            #region LambdaUIHandlers
+
+            this.ConnectToServerButton.Click += async (s, a) =>
+            {
+                this.NotConnected.Hide();
+                await client.ConnectToSignaller();
+                if (client.IsConnected) this.Connected.Show();
+            };
+
+            this.DisconnectFromServerButton.Click += async (s, a) =>
+            {
+                this.Connected.Hide();
+                client.DisconnectFromSignaller();
+                this.NotConnected.Show();
+            };
+
+            #endregion
+
+            Logger.Log("Done.");
         }
 
-        #region UI_Handlers
+        #region FunctionalUIHandlers
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!this.client.IsInRoom()) return;
             var message = "Hello, World!";
-            await this.conductor.UISignaller.SendPlain(message);
-            Logger.Log($"Send message: {message} to connected peers");
+            await this.client.SendMessage("Plain", message);
+            Logger.Log($"Sent message: {message} to connected peers.");
         }
 
         private void CaptureFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedProfile = (this.CaptureFormatComboBox.SelectedItem as CaptureProfile);
+            var selectedProfile = (this.CaptureFormatComboBox.SelectedItem as WebRtcConductor.CaptureProfile);
             this.conductor.SetSelectedProfile(selectedProfile);
         }
 
-        #endregion
-
         private async void MediaDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var mediaDevice = (this.MediaDeviceComboBox.SelectedItem as VideoDevice);
+            var mediaDevice = (this.MediaDeviceComboBox.SelectedItem as WebRtcConductor.VideoDevice);
             this.conductor.SetSelectedMediaDevice(mediaDevice);
 
             this.CaptureFormatComboBox.ItemsSource =
                 await this.conductor.GetCaptureProfiles(mediaDevice);
             this.CaptureFormatComboBox.SelectedIndex = 0;
         }
+
+        private void CreateRoomButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!this.client.IsConnected) return;
+            if (this.CreateRoomTextBox.Text == "Room Name...")
+            {
+                Logger.Log("Invalid Room Name.");
+            }
+            else
+            {
+                this.client.RequestCreateRoom(this.CreateRoomTextBox.Text);
+                Logger.Log($"Sent request to create room {this.CreateRoomTextBox.Text}");
+            }
+        }
+
+        #endregion
     }
 }

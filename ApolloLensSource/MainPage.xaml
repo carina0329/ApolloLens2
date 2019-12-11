@@ -15,7 +15,7 @@
         </Grid.ColumnDefinitions>
         <Grid
             Grid.Column="0"            
-            x:Name="ConnectionOptions">
+            x:Name="ConnectionOptions" Grid.ColumnSpan="2" Margin="0,0,470,0">
             <StackPanel
                 x:Name="NotConnected"
                 Orientation="Horizontal"
@@ -52,6 +52,8 @@
                     Margin="12"
                     Click="SayHiButton_Click"
                     Content="Say Hi" />
+                <Button x:Name="CreateRoomButton" Content="Create Room" Click="CreateRoomButton_Click"/>
+                <TextBox x:Name="CreateRoomTextBox" Margin="12" Text="Room Name..." TextWrapping="Wrap" Width="200" Height="34"/>
             </StackPanel>
         </Grid>
         <TextBox
