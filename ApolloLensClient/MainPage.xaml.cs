@@ -60,6 +60,7 @@ namespace ApolloLensClient
             this.client.ConnectionSuccessUIHandler += async (s, a) =>
             {
                 Logger.Log("Connected to Signaller.");
+                this.changeStep(2);
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
                     this.client.RequestPollRooms();
@@ -71,6 +72,7 @@ namespace ApolloLensClient
             this.client.ConnectionEndedUIHandler += async (s, a) =>
             {
                 Logger.Log("Disconnected from Signaller.");
+                this.changeStep(1);
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                 {
                     if (!this.conductor.CallInProgress())
@@ -138,6 +140,7 @@ namespace ApolloLensClient
 
             this.client.RoomJoinSuccessUIHandler += (s, m) =>
             {
+                this.changeStep(3);
                 Logger.Log("Successfully joined room.");
             };
 
@@ -277,15 +280,17 @@ namespace ApolloLensClient
                 this.conductor.SetMediaOptions(opts);
                 await this.conductor.StartCall();
                 Logger.Log("Connection started...");
-                this.SayHiButton.Hide();
+                //this.SayHiButton.Hide();
+                this.changeStep(4);
             } else
             {
                 Logger.Log("Disconnecting from source...");
                 await this.conductor.Shutdown();
                 Logger.Log("Connection ended...");
-                this.SayHiButton.Show();
+                //this.SayHiButton.Show();
                 this.ConnectedOptions.Hide();
                 this.StartupSettings.Show();
+                this.changeStep(3);
             }
 
             if (this.conductor.CallInProgress())
@@ -299,6 +304,39 @@ namespace ApolloLensClient
             }
 
             isProcessing = false;
+        }
+
+        private async void changeStep(int step)
+        {
+            await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                if (step == 1)
+                {
+                    this.TitleStep1.FontWeight = Windows.UI.Text.FontWeights.Bold;
+                    this.TitleStep2.FontWeight = Windows.UI.Text.FontWeights.Normal;
+                    this.TitleStep3.FontWeight = Windows.UI.Text.FontWeights.Normal;
+                }
+                else if (step == 2)
+                {
+                    this.TitleStep1.FontWeight = Windows.UI.Text.FontWeights.Normal;
+                    this.TitleStep2.FontWeight = Windows.UI.Text.FontWeights.Bold;
+                    this.TitleStep3.FontWeight = Windows.UI.Text.FontWeights.Normal;
+
+                }
+                else if (step == 3)
+                {
+                    this.TitleStep1.FontWeight = Windows.UI.Text.FontWeights.Normal;
+                    this.TitleStep2.FontWeight = Windows.UI.Text.FontWeights.Normal;
+                    this.TitleStep3.FontWeight = Windows.UI.Text.FontWeights.Bold;
+
+                }
+                else if (step == 4)
+                {
+                    this.TitleStep1.FontWeight = Windows.UI.Text.FontWeights.Normal;
+                    this.TitleStep2.FontWeight = Windows.UI.Text.FontWeights.Normal;
+                    this.TitleStep3.FontWeight = Windows.UI.Text.FontWeights.Normal;
+                }
+            });
         }
 
         private void JoinRoomComboBox_DropDownOpened(object sender, object e)
@@ -405,5 +443,6 @@ namespace ApolloLensClient
         }
 
         #endregion
+
     }
 }

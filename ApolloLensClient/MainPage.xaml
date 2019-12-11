@@ -6,73 +6,144 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    >
+    <Page.Background>
+        <ImageBrush ImageSource="Assets/bg.png"/>
+    </Page.Background>
+
+
     <Grid>
         <Grid
             x:Name="NotInCall">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
                 <ColumnDefinition
-                    Width="auto" />
+                    Width="auto" MinWidth="220" />
             </Grid.ColumnDefinitions>
+
+            <TextBlock x:Name="TitleWelcome" HorizontalAlignment="Left" Margin="29,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="101"  FontSize="50" Foreground="White" FontFamily="Segoe UI">
+                <TextBlock.Text>Welcome.</TextBlock.Text>
+            </TextBlock>
+            <TextBlock x:Name="TitleGetStarted" HorizontalAlignment="Left" Margin="68,96,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="61" FontSize="35" Foreground="White" FontFamily="Segoe UI Light">
+                <TextBlock.Text>To get started,</TextBlock.Text>
+            </TextBlock>
+            <TextBlock x:Name="TitleStep1" HorizontalAlignment="Left" Margin="94,157,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="53" FontSize="32" Foreground="White" FontFamily="Segoe UI Light" Grid.ColumnSpan="2">
+                <TextBlock.Text>1) Connect to Signalling Server</TextBlock.Text>
+                <TextBlock.FontWeight>
+                    <FontWeight>Bold</FontWeight>
+                </TextBlock.FontWeight>
+            </TextBlock>
+            <TextBlock x:Name="TitleStep2" HorizontalAlignment="Left" Margin="94,207,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" FontSize="32" Foreground="White" FontFamily="Segoe UI Light">
+                <TextBlock.Text>2) Select Room &amp; Join</TextBlock.Text>
+                <TextBlock.FontWeight>
+                    <FontWeight>Normal</FontWeight>
+                </TextBlock.FontWeight>
+            </TextBlock>
+            <TextBlock x:Name="TitleStep3" HorizontalAlignment="Left" Margin="94,254,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="45" FontSize="32" Foreground="White" FontFamily="Segoe UI Light">
+                <TextBlock.Text>3) Connect to Source</TextBlock.Text>
+                <TextBlock.FontWeight>
+                    <FontWeight>Normal</FontWeight>
+                </TextBlock.FontWeight>
+            </TextBlock>
+
+            <TextBlock x:Name="TitleLogs" HorizontalAlignment="Left" Margin="16,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="45" FontSize="32" Foreground="Black" FontFamily="Segoe UI Light" Grid.Column="1" Canvas.ZIndex="1">
+                <TextBlock.Text>Logs</TextBlock.Text>
+                <TextBlock.FontWeight>Normal</TextBlock.FontWeight>
+            </TextBlock>
+
+
+
+
             <StackPanel
                 x:Name="StartupSettings"
                 Grid.Column="0"
                 Visibility="Visible"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                Orientation="Vertical">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button
-                        x:Name="ServerConnectButton"
-                        Content="Connect to Signalling Server"
-                        />
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Left"
+                Orientation="Vertical" Margin="40">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Height="45">
+                    <Button x:Name="ServerConnectButton" Height="59" Content="Connect to Signaller" VerticalAlignment="Center" Padding="8,4,8,5" Margin="0,0,-7,0">
+                        <Button.FontFamily>Segoe UI</Button.FontFamily>
+                        <Button.FontSize>25</Button.FontSize>
+                        <Button.Background>
+                            <SolidColorBrush Color="White" Opacity="0.9"/>
+                        </Button.Background>
+                    </Button>
                 </StackPanel>
             </StackPanel>
             <StackPanel
                 x:Name="ConnectedOptions"
-                Grid.Column="0"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Left"
                 Orientation="Horizontal"
-                Visibility="Collapsed">
+                Visibility="Collapsed"
+                Margin="40">
                 <Button
                     x:Name="SourceConnectButton"
                     Content="Connect to Source"
                     Click="SourceConnectButton_Click"
-                    Margin="12" />
+                    Height="45" Margin="0,0,20,0"
+                    >
+                    <Button.Background>
+                        <SolidColorBrush Color="White" Opacity="0.9"/>
+                    </Button.Background>
+                    <Button.FontFamily>Segoe UI</Button.FontFamily>
+                    <Button.FontSize>25</Button.FontSize>
+
+
+
+                </Button>
+
+
                 <Button
                     x:Name="SourceDisconnectButton"
                     Content="Disconnect from Source"
                     Click="SourceConnectButton_Click"
-                    Visibility="Collapsed"
-                    Margin="12" />
-                <Button
-                    x:Name="SayHiButton"
-                    Click="SayHiButton_Click"
-                    Content="Say Hi"
-                    Margin="12" />
+                    Margin="20"
+                    Visibility="Collapsed">
+
+                    <Button.Background>
+                        <SolidColorBrush Color="White" Opacity="0.9"/>
+                    </Button.Background>
+
+                    <Button.FontFamily>Segoe UI</Button.FontFamily>
+                    <Button.FontSize>25</Button.FontSize>
+
+                </Button>
+
                 <Button
                     x:Name="JoinRoomButton"
                     Click="JoinRoomButton_Click"
                     Content="Join Room"
-                    Margin="12" />
+                     Height="45" Margin="0,0,20,0" >
+
+                    <Button.FontFamily>Segoe UI</Button.FontFamily>
+                    <Button.FontSize>25</Button.FontSize>
+
+
+                    <Button.Background>
+                        <SolidColorBrush Color="White" Opacity="0.9"/>
+                    </Button.Background>
+
+                </Button>
+
                 <ComboBox
-                    x:Name="JoinRoomComboBox"
-                    VerticalAlignment="Center"
-                    Margin="12"
-                    DropDownOpened="JoinRoomComboBox_DropDownOpened" />
+                x:Name="JoinRoomComboBox"
+                VerticalAlignment="Center"
+                DropDownOpened="JoinRoomComboBox_DropDownOpened" Height="46" Width="110" />
+
             </StackPanel>
             <TextBox
                 Grid.Column="1"
                 x:Name="OutputTextBox"
-                VerticalAlignment="Stretch"
-                HorizontalAlignment="Right"
-                Margin="10"
-                Width="300"
+                HorizontalAlignment="Center"
+                Width="256"
                 IsReadOnly="True"
                 TextWrapping="Wrap"
-                ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="2,0,0,0"
+               Padding="10,60,6,6" FontSize="18"
+                />
+
         </Grid>
         <MediaElement
             x:Name="RemoteVideo"
@@ -86,5 +157,21 @@
                 <CompositeTransform x:Name="t_Transform" />
             </Border.RenderTransform>
         </Border>
+
+        <Button
+                    x:Name="SayHiButton"
+                    Click="SayHiButton_Click"
+                    Content="Say Hi"
+                    Height="45" 
+            Visibility="Collapsed">
+
+            <Button.Background>
+                <SolidColorBrush Color="White" Opacity="0.9"/>
+            </Button.Background>
+
+        </Button>
     </Grid>
+
+
+
 </Page>
