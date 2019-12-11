@@ -150,13 +150,20 @@
             Grid.Column="1"
             HorizontalAlignment="Stretch"
             RealTimePlayback="True" />
-        <Border Name="CursorElement" BorderBrush="Transparent" BorderThickness="80" ManipulationMode = "TranslateX, TranslateY, Scale"
-                Height="195" Width="195" Visibility="Collapsed" Margin="653,260,652,545">
-            <SymbolIcon Name="CursorElementInner" Symbol="Go" Foreground="Black" Width="35" Height="35"></SymbolIcon>
-            <Border.RenderTransform>
-                <CompositeTransform x:Name="t_Transform" />
-            </Border.RenderTransform>
-        </Border>
+        <StackPanel
+            x:Name="CursorPanel"
+            Grid.Column="0"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal" Visibility="Collapsed">
+            <Border Name="CursorElement" BorderBrush="Transparent" BorderThickness="80" ManipulationMode = "TranslateX, TranslateY, Scale"
+                    Height="195" Width="195">
+                <SymbolIcon Name="CursorElementInner" Symbol="Go" Foreground="Black" Width="35" Height="35"></SymbolIcon>
+                <Border.RenderTransform>
+                    <CompositeTransform x:Name="t_Transform" />
+                </Border.RenderTransform>
+            </Border>
+        </StackPanel>
 
         <Button
                     x:Name="SayHiButton"

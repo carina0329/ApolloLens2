@@ -79,7 +79,7 @@ namespace ApolloLensClient
                     {
                         this.ConnectedOptions.Hide();
                         this.StartupSettings.Show();
-                        this.CursorElement.Hide();
+                        this.CursorPanel.Hide();
                         this.SourceDisconnectButton.Hide();
                         this.SourceConnectButton.Show();
                     }
@@ -93,7 +93,7 @@ namespace ApolloLensClient
                 {
                     this.ConnectedOptions.Hide();
                     this.StartupSettings.Show();
-                    this.CursorElement.Hide();
+                    this.CursorPanel.Hide();
                     this.SourceDisconnectButton.Hide();
                     this.SourceConnectButton.Show();
                 });
@@ -179,8 +179,6 @@ namespace ApolloLensClient
 
                 contSpeechRecognizer.HypothesisGenerated +=
                     ContSpeechRecognizer_HypothesisGenerated;
-                contSpeechRecognizer.ContinuousRecognitionSession.ResultGenerated +=
-                    ContinuousRecognitionSession_ResultGenerated;
                 contSpeechRecognizer.ContinuousRecognitionSession.Completed +=
                     ContinuousRecognitionSession_Completed;
 
@@ -203,7 +201,6 @@ namespace ApolloLensClient
                 if (client.IsConnected)
                 {
                     this.ConnectedOptions.Show();
-                    this.CursorElement.Show();
                 }
             }; 
             
@@ -265,9 +262,6 @@ namespace ApolloLensClient
             if (isProcessing) return;
             isProcessing = true;
 
-            // center cursor before starting call
-            this.CenterCursor();
-
             if (!this.conductor.CallInProgress())
             {
                 Logger.Log("Starting connection to source...");
@@ -280,6 +274,11 @@ namespace ApolloLensClient
                 this.conductor.SetMediaOptions(opts);
                 await this.conductor.StartCall();
                 Logger.Log("Connection started...");
+                // center and show cursor now that call has started
+                this.CursorPanel.Show();
+                // After signaller caches position and sends out most recent update,
+                // we won't need this.
+                this.CenterCursor();
                 //this.SayHiButton.Hide();
                 this.changeStep(4);
             } else
@@ -410,11 +409,11 @@ namespace ApolloLensClient
                         break;
                     case "hide cursor":
                         Logger.Log("hide cursor");
-                        this.CursorElement.Hide();
+                        this.CursorPanel.Hide();
                         break;
                     case "show cursor":
                         Logger.Log("show cursor");
-                        this.CursorElement.Show();
+                        this.CursorPanel.Show();
                         break;
                     case "increase cursor size":
                         Logger.Log("increase old scale:" + this.CursorElementInner.Scale.ToString());
@@ -436,10 +435,6 @@ namespace ApolloLensClient
                         break;
                 }
             });
-        }
-        private async void ContinuousRecognitionSession_ResultGenerated(
-        SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
-        {
         }
 
         #endregion

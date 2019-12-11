@@ -234,8 +234,9 @@ try {
     messageKey = jsonData.Signaller.MessageKey;
     messageValue = jsonData.Signaller.MessageValue;
 }
-catch {
+catch (error) {
     console.log("Failed to parse config.json.");
+    console.error(error);
     process.exit(1);
 }
 console.log("Loaded configuration from config.json. Current messageTypes:");
