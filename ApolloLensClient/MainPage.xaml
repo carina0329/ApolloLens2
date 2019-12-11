@@ -18,7 +18,7 @@
             <StackPanel
                 x:Name="StartupSettings"
                 Grid.Column="0"
-                Visibility="Collapsed"
+                Visibility="Visible"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 Orientation="Vertical">
@@ -35,7 +35,7 @@
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 Orientation="Horizontal"
-                Visibility="Visible">
+                Visibility="Collapsed">
                 <Button
                     x:Name="SourceConnectButton"
                     Content="Connect to Source"
@@ -80,7 +80,7 @@
             HorizontalAlignment="Stretch"
             RealTimePlayback="True" />
         <Border Name="CursorElement" BorderBrush="Transparent" BorderThickness="80" ManipulationMode = "TranslateX, TranslateY, Scale"
-                Height="195" Width="195" Visibility="Collapsed" Margin="125,403,1180,402">
+                Height="195" Width="195" Visibility="Collapsed" Margin="653,260,652,545">
             <SymbolIcon Name="CursorElementInner" Symbol="Go" Foreground="Black" Width="35" Height="35"></SymbolIcon>
             <Border.RenderTransform>
                 <CompositeTransform x:Name="t_Transform" />

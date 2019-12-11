@@ -131,6 +131,16 @@ namespace ApolloLensClient
                 });
             };
 
+            this.client.RoomJoinFailedUIHandler += (s, m) =>
+            {
+                Logger.Log("Failed to join room.");
+            };
+
+            this.client.RoomJoinSuccessUIHandler += (s, m) =>
+            {
+                Logger.Log("Successfully joined room.");
+            };
+
             #endregion
 
             #region ConductorInitialization
@@ -226,7 +236,11 @@ namespace ApolloLensClient
 
         private async void SayHiButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!this.client.IsInRoom()) return;
+            if (!this.client.IsInRoom())
+            {
+                Logger.Log("Please join a room first.");
+                return;
+            }
 
             if (isProcessing) return;
             isProcessing = true;
@@ -239,10 +253,17 @@ namespace ApolloLensClient
         }
         private async void SourceConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!this.client.IsInRoom()) return;
+            if (!this.client.IsInRoom())
+            {
+                Logger.Log("Please join a room first.");
+                return;
+            }
 
             if (isProcessing) return;
             isProcessing = true;
+
+            // center cursor before starting call
+            this.CenterCursor();
 
             if (!this.conductor.CallInProgress())
             {
@@ -324,7 +345,7 @@ namespace ApolloLensClient
 
             await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
-                Logger.Log(args.Hypothesis.Text);
+               // Logger.Log(args.Hypothesis.Text);
                 //Logger.Log(args.Hypothesis.Text);	
                 switch (args.Hypothesis.Text)
                 {
