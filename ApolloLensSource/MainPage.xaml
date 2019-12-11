@@ -55,7 +55,6 @@
                 <Button x:Name="CreateRoomButton" Content="Create Room" Click="CreateRoomButton_Click"/>
                 <TextBox x:Name="CreateRoomTextBox" Margin="12" Text="Room Name..." TextWrapping="Wrap" Width="200" Height="34"/>
             </StackPanel>
-            <TextBlock x:Name="StatusText" HorizontalAlignment="Left" Margin="90,871,0,0" Text="Status: Disconnected From Signaller" TextWrapping="Wrap" VerticalAlignment="Top"/>
         </Grid>
         <TextBox
             Grid.Column="1"
