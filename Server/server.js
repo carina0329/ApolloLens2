@@ -246,7 +246,7 @@ console.log(messageHandlers);
 
 // handler for a new connection to the server
 wss.on('connection', function connection(ws, request, client) {
-    console.log(ws);
+
     // establish connection identifiers
     ws.uid = uniqueConnectionId++; // unique connection ID
     ws.id = null; // "source" or "client"
