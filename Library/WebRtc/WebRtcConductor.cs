@@ -695,6 +695,11 @@ namespace ApolloLensLibrary.WebRtc
         /// <returns></returns>
         private Task ShutdownIndividual(string key)
         {
+            // shutdown sent by signaller when call not in place, which is okay
+            // for now, the signaller doesn't care if a call is on or not. If this changes,
+            // then this should be removed
+            if (!this.PeerConnections.ContainsKey(key)) return Task.CompletedTask;
+
             this.PeerConnections[key].OnIceCandidate -= this.OnIceCandidate;
             this.PeerConnections[key].OnTrack -= this.OnTrack;
 
