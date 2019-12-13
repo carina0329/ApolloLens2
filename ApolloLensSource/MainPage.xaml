@@ -53,7 +53,7 @@
                     Click="SayHiButton_Click"
                     Content="Say Hi" />
                 <Button x:Name="CreateRoomButton" Content="Create Room" Click="CreateRoomButton_Click"/>
-                <TextBox x:Name="CreateRoomTextBox" Margin="12" Text="Room Name..." TextWrapping="Wrap" Width="200" Height="34"/>
+                <TextBox x:Name="CreateRoomTextBox" Margin="12" PlaceholderText="Room Name..." TextWrapping="Wrap" Width="200" Height="34"/>
             </StackPanel>
         </Grid>
         <TextBox
