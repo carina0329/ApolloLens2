@@ -26,11 +26,9 @@ namespace ApolloLensClient
     {
         private SignallerClient client;
         private WebRtcConductor conductor;
-
         private UserConfig Config { get; } = UserConfig.Instance;
 
         private SpeechRecognizer contSpeechRecognizer;
-        private bool voiceStarted = false;
         private int zoomCount = 0; /* Make sure the user doesn't zoom out more than the original zoom */
 
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
@@ -58,14 +56,18 @@ namespace ApolloLensClient
 
         protected override async void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            if (this.voiceStarted)
+            try
+            {
                 await this.contSpeechRecognizer.ContinuousRecognitionSession.StopAsync();
+            } catch (System.InvalidOperationException)
+            {
+                Console.WriteLine("Stopping speech detection error.");
+            }
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
             Logger.Log("Initializing Application.");
-            this.voiceStarted = false;
 
             #region ClientInitialization
 
@@ -85,7 +87,7 @@ namespace ApolloLensClient
             // For example, if source disconnected prior to direct connection establishment.
             this.client.ConnectionEndedUIHandler += async (s, a) =>
             {
-                Logger.Log("Disconnected from Signaller.");
+                Logger.Log("Disconnected from Signaller. Likely the video source disconnected.");
                 this.changeStep(1);
                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                 {
@@ -196,11 +198,14 @@ namespace ApolloLensClient
                     ContSpeechRecognizer_HypothesisGenerated;
 
                 await this.contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
-                this.voiceStarted = true;
             }
             catch(System.Runtime.InteropServices.COMException)
             {
                 Logger.Log("Please restart the Application and enable Speech Recognition in Settings -> Privacy -> Speech.");
+            }
+            catch(System.InvalidOperationException)
+            {
+                Logger.Log("Failed to start speech recognition... Try to restart the client.");
             }
 
             #endregion
@@ -210,7 +215,7 @@ namespace ApolloLensClient
             this.ServerConnectButton.Click += async (s, a) =>
             {
                 this.StartupSettings.Hide();
-                this.SettingsButton.Hide();
+                //this.SettingsButton.Hide();
                 await this.client.ConnectToSignaller();
 
                 if (client.IsConnected)
@@ -372,6 +377,7 @@ namespace ApolloLensClient
         {
             Logger.Log($"Requesting to join room {this.JoinRoomComboBox.SelectedValue.ToString()}");
             this.client.RequestJoinRoom(this.JoinRoomComboBox.SelectedValue.ToString());
+            this.SettingsButton.Hide();
         }
 
         private async void CenterCursor()
