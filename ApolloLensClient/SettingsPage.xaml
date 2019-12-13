@@ -1,0 +1,90 @@
+﻿<Page
+    x:Class="ApolloLensClient.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ApolloLensClient"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    >
+    <Page.Background>
+        <ImageBrush ImageSource="Assets/bg.png"/>
+    </Page.Background>
+
+
+    <Grid
+        x:Name="NotInCall">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition MaxHeight="100"/>
+            <RowDefinition ScrollViewer.VerticalScrollBarVisibility="Visible"/>
+            <RowDefinition MaxHeight="100"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="TitleSettings" Grid.Row="0" HorizontalAlignment="Left" Margin="29,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="101"  FontSize="50" Foreground="White" FontFamily="Segoe UI" Text="Settings"/>
+        <Grid
+            x:Name="SettingsOptions" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition MaxWidth="400" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="75"/>
+                <RowDefinition Height="75"/>
+                <RowDefinition Height="75"/>
+                <RowDefinition Height="75"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock x:Name="TitleSignallerAddress" HorizontalAlignment="Right" Grid.Column="0" Grid.Row="0" TextWrapping="Wrap" Height="42" FontSize="35" Foreground="White" FontFamily="Segoe UI Light" VerticalAlignment="Center">
+                <TextBlock.Text>Signaller Address:</TextBlock.Text>
+            </TextBlock>
+            <TextBox x:Name="SignallerAddressInput" HorizontalAlignment="Stretch" Grid.Column="1" Grid.Row="0" PlaceholderText="Address..." FontSize="35" TextWrapping="Wrap" Padding="10,0,0,0" Height="55" Margin="20,0,20,0"/>
+
+            <TextBlock x:Name="TitleSignallerPort" HorizontalAlignment="Right" Grid.Column="0" Grid.Row="1" TextWrapping="Wrap" Height="42" FontSize="35" Foreground="White" FontFamily="Segoe UI Light" VerticalAlignment="Center">
+                <TextBlock.Text>Signaller Port:</TextBlock.Text>
+            </TextBlock>
+            <TextBox x:Name="SignallerPortInput" HorizontalAlignment="Stretch" Grid.Column="1" Grid.Row="1" PlaceholderText="Port..." FontSize="35" TextWrapping="Wrap" Padding="10,0,0,0" Height="55" Margin="20,0,20,0"/>
+
+            <TextBlock x:Name="TitleSecureSignaller" HorizontalAlignment="Right" Grid.Column="0" Grid.Row="2" TextWrapping="Wrap" Height="42" FontSize="35" Foreground="White" FontFamily="Segoe UI Light" VerticalAlignment="Center">
+                <TextBlock.Text>Secure Signaller:</TextBlock.Text>
+            </TextBlock>
+            <ToggleSwitch
+                x:Name="SecureSignallerSwitch"
+                VerticalAlignment="Center"
+                Height="55" HorizontalAlignment="Stretch" Grid.Column="1" Grid.Row="2" IsOn="False" FontSize="35" Padding="10,0,0,0" Margin="20,0,20,0" />
+
+            <TextBlock x:Name="TitleCursorColor" HorizontalAlignment="Right" Grid.Column="0" Grid.Row="3" TextWrapping="Wrap" Height="42" FontSize="35" Foreground="White" FontFamily="Segoe UI Light" VerticalAlignment="Center">
+                <TextBlock.Text>Cursor Color:</TextBlock.Text>
+            </TextBlock>
+            <ComboBox
+                x:Name="CursorColorComboBox"
+                VerticalAlignment="Center"
+                Height="55" HorizontalAlignment="Stretch" Grid.Column="1" Grid.Row="3" PlaceholderText="Color..." FontSize="35" Padding="10,0,0,0" Margin="20,0,20,0" />
+        </Grid>
+        <Grid HorizontalAlignment="Right" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition MinWidth="220"/>
+                <ColumnDefinition MinWidth="220"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="CancelSave" Grid.Column="0" Height="59" Width="200" Content="Cancel" VerticalAlignment="Center" Padding="8,4,8,5"
+                    Click="CancelSaveButton_Click">
+                <Button.FontFamily>Segoe UI</Button.FontFamily>
+                <Button.FontSize>25</Button.FontSize>
+                <Button.Background>
+                    <SolidColorBrush Color="White" Opacity="0.9"/>
+                </Button.Background>
+            </Button>
+            <Button x:Name="SaveButton" Grid.Column="1" Height="59" Width="200" Content="Save Settings" VerticalAlignment="Center" Padding="8,4,8,5"
+                    Click="SaveButton_Click">
+                <Button.FontFamily>Segoe UI</Button.FontFamily>
+                <Button.FontSize>25</Button.FontSize>
+                <Button.Background>
+                    <SolidColorBrush Color="White" Opacity="0.9"/>
+                </Button.Background>
+            </Button>
+        </Grid>
+    </Grid>
+</Page>

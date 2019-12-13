@@ -24,6 +24,9 @@
             <TextBlock x:Name="TitleWelcome" HorizontalAlignment="Left" Margin="29,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="101"  FontSize="50" Foreground="White" FontFamily="Segoe UI">
                 <TextBlock.Text>Welcome.</TextBlock.Text>
             </TextBlock>
+            <Viewbox HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="0" Width="50" Height="50" Margin="0,10,10,0">
+                <SymbolIcon Name="SettingsButton" Symbol="Setting" Foreground="White" Tapped="SettingsButton_Tapped" />
+            </Viewbox>
             <TextBlock x:Name="TitleGetStarted" HorizontalAlignment="Left" Margin="68,96,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="61" FontSize="35" Foreground="White" FontFamily="Segoe UI Light">
                 <TextBlock.Text>To get started,</TextBlock.Text>
             </TextBlock>

@@ -6,10 +6,14 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Markup;
 using Windows.Foundation;
 using Windows.Media.SpeechRecognition;
 using Newtonsoft.Json;
 using System;
+using System.Reflection;
+using Windows.UI.Xaml.Media;
+using Windows.UI;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -23,7 +27,10 @@ namespace ApolloLensClient
         private SignallerClient client;
         private WebRtcConductor conductor;
 
+        private UserConfig Config { get; } = UserConfig.Instance;
+
         private SpeechRecognizer contSpeechRecognizer;
+        private bool voiceStarted = false;
         private int zoomCount = 0; /* Make sure the user doesn't zoom out more than the original zoom */
 
         private bool isProcessing = false; /* we need a lock/mutex in this trick for users that click too many buttons */
@@ -49,9 +56,16 @@ namespace ApolloLensClient
             };
         }
 
+        protected override async void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            if (this.voiceStarted)
+                await this.contSpeechRecognizer.ContinuousRecognitionSession.StopAsync();
+        }
+
         protected override async void OnNavigatedTo(NavigationEventArgs args)
         {
             Logger.Log("Initializing Application.");
+            this.voiceStarted = false;
 
             #region ClientInitialization
 
@@ -82,6 +96,7 @@ namespace ApolloLensClient
                         this.CursorPanel.Hide();
                         this.SourceDisconnectButton.Hide();
                         this.SourceConnectButton.Show();
+                        //this.SettingsButton.Show();
                     }
                 });
             };
@@ -173,16 +188,15 @@ namespace ApolloLensClient
 
             try
             {
-                contSpeechRecognizer = new SpeechRecognizer();
+                this.contSpeechRecognizer = new SpeechRecognizer();
 
-                await contSpeechRecognizer.CompileConstraintsAsync();
+                await this.contSpeechRecognizer.CompileConstraintsAsync();
 
-                contSpeechRecognizer.HypothesisGenerated +=
+                this.contSpeechRecognizer.HypothesisGenerated +=
                     ContSpeechRecognizer_HypothesisGenerated;
-                contSpeechRecognizer.ContinuousRecognitionSession.Completed +=
-                    ContinuousRecognitionSession_Completed;
 
-                await contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
+                await this.contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
+                this.voiceStarted = true;
             }
             catch(System.Runtime.InteropServices.COMException)
             {
@@ -196,6 +210,7 @@ namespace ApolloLensClient
             this.ServerConnectButton.Click += async (s, a) =>
             {
                 this.StartupSettings.Hide();
+                this.SettingsButton.Hide();
                 await this.client.ConnectToSignaller();
 
                 if (client.IsConnected)
@@ -251,6 +266,11 @@ namespace ApolloLensClient
 
             isProcessing = false;
         }
+
+        private void SettingsButton_Tapped(object sender, RoutedEventArgs e)
+        {
+            this.Frame.Navigate(typeof(SettingsPage));
+        }
         private async void SourceConnectButton_Click(object sender, RoutedEventArgs e)
         {
             if (!this.client.IsInRoom())
@@ -275,6 +295,11 @@ namespace ApolloLensClient
                 await this.conductor.StartCall();
                 Logger.Log("Connection started...");
                 // center and show cursor now that call has started
+                this.CursorElementInner.Foreground = new SolidColorBrush(
+                    (Color)XamlBindingHelper.ConvertValue(
+                        typeof(Color),
+                        (string)Config.GetProperty("Cursor.Color"))
+                    );
                 this.CursorPanel.Show();
                 // After signaller caches position and sends out most recent update,
                 // we won't need this.
@@ -371,10 +396,11 @@ namespace ApolloLensClient
 
         #region FunctionalSpeechRecognitionHandlers
 
-        private async void ContinuousRecognitionSession_Completed(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionCompletedEventArgs args)
+        /*private async void ContinuousRecognitionSession_Completed(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionCompletedEventArgs args)
         {
-            await contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
-        }
+            await this.contSpeechRecognizer.ContinuousRecognitionSession.StopAsync();
+            await this.contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
+        }*/
 
         private async void ContSpeechRecognizer_HypothesisGenerated(
      SpeechRecognizer sender, SpeechRecognitionHypothesisGeneratedEventArgs args)

@@ -13,6 +13,8 @@ namespace ApolloLensLibrary.Signaller
     {
         #region Variables
 
+        private Utilities.UserConfig Config { get; } = Utilities.UserConfig.Instance;
+
         /// <summary>
         /// Used for registration with Signaller.
         /// Refers to future WebRTC connection: can be a "client" or "source."
@@ -25,15 +27,20 @@ namespace ApolloLensLibrary.Signaller
         public string RoomId { get; set; }
 
         /// <summary>
+        /// Whether connections to the signaller should use basic or secure websockets.
+        /// </summary>
+        private bool SecureSignaller() { return (bool)this.Config.GetProperty("Signaller.Secure"); }
+
+        /// <summary>
         /// Signaller address.
         /// </summary>
         /// <value>Needs to be in the form "ws://..." or "wss://..."</value>
-        private string Address { get; set; }
+        private string Address() { return (this.SecureSignaller()? "wss://" : "ws://") + (string)this.Config.GetProperty("Signaller.Address"); }
 
         /// <summary>
         /// Signaller port.
         /// </summary>
-        private string Port { get; set; }
+        private string Port() { return (string)this.Config.GetProperty("Signaller.Port"); }
 
         private MessageWebSocket WebSocket { get; set; }
         public bool IsConnected { get; set; }
@@ -69,28 +76,22 @@ namespace ApolloLensLibrary.Signaller
         /// </summary>
         private void Configure()
         {
-            using (StreamReader r = File.OpenText("Library\\Utilities\\config.json"))
+            this.MessageProtocol = new SignallerMessageProtocol
+            (
+                (string)this.Config.GetProperty("Signaller.MessageKey"),
+                (string)this.Config.GetProperty("Signaller.MessageValue")
+            );
+            this.MessageHandlers = new Dictionary<string, EventHandler<SignallerMessage>>();
+            JArray messageTypes = this.Config.GetProperty("Signaller.MessageTypes") as JArray;
+            foreach (JToken type in messageTypes)
             {
-                string json = r.ReadToEnd();
-                var jobj = JObject.Parse(json);
-                this.Address = "ws://" + (string)jobj.SelectToken("Signaller.Address");
-                this.Port = (string)jobj.SelectToken("Signaller.Port");
-                this.MessageProtocol = new SignallerMessageProtocol
-                (
-                    (string)jobj.SelectToken("Signaller.MessageKey"),
-                    (string)jobj.SelectToken("Signaller.MessageValue")
-                );
-                this.MessageHandlers = new Dictionary<string, EventHandler<SignallerMessage>>();
-                JArray messageTypes = (JArray)jobj.SelectToken("Signaller.MessageTypes");
-                foreach (JToken type in messageTypes)
-                {
-                    EventHandler<SignallerMessage> empty = null;
-                    this.MessageHandlers.Add((string)type, empty);
-                }
-
-                this.MessageHandlers["RoomCreate"] = ReceivedRoomCreateMessage;
-                this.MessageHandlers["RoomJoin"] = ReceivedRoomJoinMessage;
+                EventHandler<SignallerMessage> empty = null;
+                this.MessageHandlers.Add((string)type, empty);
             }
+
+            this.MessageHandlers["RoomCreate"] = ReceivedRoomCreateMessage;
+            this.MessageHandlers["RoomJoin"] = ReceivedRoomJoinMessage;
+
         }
 
         #endregion
@@ -110,9 +111,9 @@ namespace ApolloLensLibrary.Signaller
                 this.WebSocket.Control.MessageType = SocketMessageType.Utf8;
                 this.WebSocket.MessageReceived += this.ReceivedMessage;
                 this.WebSocket.Closed += this.ConnectionEnded;
-                Uri addr = new Uri(this.Address);
+                Uri addr = new Uri(this.Address());
                 UriBuilder addrBuilder = new UriBuilder(addr);
-                addrBuilder.Port = Int32.Parse(this.Port);
+                addrBuilder.Port = Int32.Parse(this.Port());
                 await this.WebSocket.ConnectAsync(addrBuilder.Uri);
                 await this.ConnectionSucceeded();
             }

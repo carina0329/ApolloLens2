@@ -1,0 +1,24 @@
+{
+  "Signaller": {
+    "Secure": "false",
+    "Address": "127.0.0.1",
+    "Port": "8080",
+    "MessageKey": "MessageType",
+    "MessageValue": "MessageContents",
+    "MessageTypes": [
+      "Register",
+      "RoomCreate",
+      "RoomPoll",
+      "RoomJoin",
+      "Plain",
+      "Offer",
+      "Answer",
+      "IceCandidate",
+      "Shutdown",
+      "CursorUpdate"
+    ]
+  },
+  "Cursor": {
+    "Color": "White"
+  }
+}
