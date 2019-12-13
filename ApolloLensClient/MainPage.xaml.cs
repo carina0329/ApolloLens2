@@ -59,6 +59,10 @@ namespace ApolloLensClient
             try
             {
                 await this.contSpeechRecognizer.ContinuousRecognitionSession.StopAsync();
+                this.contSpeechRecognizer.HypothesisGenerated -=
+                    ContSpeechRecognizer_HypothesisGenerated;
+                this.contSpeechRecognizer.ContinuousRecognitionSession.Completed -=
+                   ContinuousRecognitionSession_Completed;
             } catch (System.InvalidOperationException)
             {
                 Console.WriteLine("Stopping speech detection error.");
@@ -196,6 +200,8 @@ namespace ApolloLensClient
 
                 this.contSpeechRecognizer.HypothesisGenerated +=
                     ContSpeechRecognizer_HypothesisGenerated;
+                this.contSpeechRecognizer.ContinuousRecognitionSession.Completed +=
+                   ContinuousRecognitionSession_Completed;
 
                 await this.contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
             }
@@ -402,11 +408,16 @@ namespace ApolloLensClient
 
         #region FunctionalSpeechRecognitionHandlers
 
-        /*private async void ContinuousRecognitionSession_Completed(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionCompletedEventArgs args)
+        private async void ContinuousRecognitionSession_Completed(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionCompletedEventArgs args)
         {
-            await this.contSpeechRecognizer.ContinuousRecognitionSession.StopAsync();
-            await this.contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
-        }*/
+            try
+            {
+                await this.contSpeechRecognizer.ContinuousRecognitionSession.StartAsync();
+            } catch (System.InvalidOperationException)
+            {
+                Logger.Log("Failed to start speech recognition... Try to restart the client.");
+            }
+        }
 
         private async void ContSpeechRecognizer_HypothesisGenerated(
      SpeechRecognizer sender, SpeechRecognitionHypothesisGeneratedEventArgs args)
