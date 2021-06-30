@@ -150,20 +150,34 @@ namespace ApolloLensLibrary.Imaging
             var dicomFile = await DicomFile.OpenAsync(stream);
 
             // dicom object seem easier to work with in xml
-            var xdoc = XDocument.Parse(dicomFile.Dataset.WriteToXml());
+            //var xdoc = XDocument.Parse(dicomFile.Dataset.WriteToXml());
 
             // access the images position
-            var position = xdoc
-                .GetElementsByDicomKeyword("InstanceNumber")
-                .Select(elt => Convert.ToInt32(elt.Value))
-                .FirstOrDefault();
-
+            //var position = xdoc
+            //.GetElementsByDicomKeyword("InstanceNumber")
+            //.Select(elt => Convert.ToInt32(elt.Value))
+            //.FirstOrDefault();
+            ushort positionid1 = Convert.ToUInt16("0x0020", 16);
+            ushort positionid2 = Convert.ToUInt16("0x0013", 16);
+            var position = dicomFile.Dataset.GetValues<Int32>(new DicomTag(positionid1, positionid2)).FirstOrDefault();
             // access the image's series
-            var series = xdoc
-                .GetElementsByDicomKeyword("SeriesDescription")
-                .Select(elt => elt.Value)
-                .FirstOrDefault();
-
+            //var series = xdoc
+            //.GetElementsByDicomKeyword("SeriesDescription")
+            //.Select(elt => elt.Value)
+            //.FirstOrDefault();
+            ushort seriesid1 = Convert.ToUInt16("0x0008", 16);
+            ushort seriesid2 = Convert.ToUInt16("0x103E", 16);
+            string[] seriesarray;
+            bool seriesdescfound = dicomFile.Dataset.TryGetValues<string>(new DicomTag(seriesid1, seriesid2), out seriesarray);
+            string series;
+            if (seriesdescfound)
+            {
+                series = seriesarray.FirstOrDefault();
+            }
+            else
+            {
+                series = "N/A";
+            }
             // convert the image data itself into a byte array
             // of pixels
             var dicomImage = new DicomImage(dicomFile.Dataset);

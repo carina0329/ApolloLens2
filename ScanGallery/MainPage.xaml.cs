@@ -132,7 +132,7 @@ namespace ScanGallery
             };
 
             var client = new StreamSocket();
-            await client.ConnectAsync(new HostName(this.ServerAddress), "8080");
+            await client.ConnectAsync(new HostName(this.ServerAddress), "5554");
 
             this.ImageCollection = await loader.LoadStudyAsync(client.InputStream);
             await this.OnStudyLoaded();

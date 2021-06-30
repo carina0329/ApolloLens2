@@ -55,7 +55,7 @@ namespace ScanServer
             this.dicomSender = new DicomNetworking();
             this.dicomSender.SentImage += this.Sender_SentImage;
 
-            await this.server.BindServiceNameAsync("8080");
+            await this.server.BindServiceNameAsync("5554");
         }
 
         private async void Sender_SentImage(object sender, EventArgs e)
