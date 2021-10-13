@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Connecting to the HoloLens from your computer</title>
+        <style>
+            h1, h2 {
+                text-decoration: cyan underline;
+                color: lime;
+            }
+            body {
+                background-color: black;
+                color: white;
+            }
+            a {
+                color: yellow;
+            }
+            a:hover {
+                color: cyan;
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>
+            let ipaddr = 0;
+            $(document).ready(
+                () => {
+                    $(".ipaddr").html("the HoloLens ip address");
+                    $("#ipaddr").bind("propertychange change click keyup input paste", (event) => {
+                        if($("#ipaddr").val() == "") {
+                            $(".ipaddr").html("the HoloLens ip address");
+                        } else {
+                            $(".ipaddr").html($("#ipaddr").val());
+                        }
+                    })
+                }
+            );
+        </script>
+    </head>
+    <body>
+        <h1>Connecting to the HoloLens from your computer</h1>
+        <div>
+            <p>Make sure that the HoloLens is connected to the same network as your computer.</p>
+        </div>
+        <div>
+            <p>Next, you want to get the IP address of the HoloLens.</p>
+            <p>Open Settings->Network and Internet->[Wifi name]->Advanced Options</p>
+            <p>Scroll down until you can find the IPV4 address and remember it</p>
+            <p>You can also enter the IP address below for reference</p>
+            <label for="text">Enter IP address here:</label>
+            <input type="text" id="ipaddr">
+        </div>
+        <div>
+            <h2>Connecting to the HoloLens via the Microsoft HoloLens app</h2>
+            <p>The Microsoft HoloLens app is able to allow you to screenshare what you are seeing with the HoloLens directly to your computer and is also able to take photos/videos, view the files stored in the HoloLens, and remote control the HoloLens.</p>
+            <p>You can download it to your computer <a href="https://www.microsoft.com/en-us/p/microsoft-hololens/9nblggh4qwnx?activetab=pivot:overviewtab" target="blank">here</a>.</p>
+            <p>In order to connect it to your computer, click on the "add" button and type in <span class="ipaddr"></span>.</p>
+            <p>It will now prompt you to create a new username and password to connect with the HoloLens. Create one on your computer at this moment.</p>
+            <p>You should now be connected with the HoloLens via the HoloLens app.</p>
+        </div>
+        <div>
+            <h2>Connecting to the HoloLens via Visual Studio</h2>
+            <ol>
+                <li>Right below the menu bar, you should see the debug toolbar. Change the debug toolbar items to be Debug, ARM, and whatever app you want to run.
+                <li>Next, on the button with the green arrow, select Remote Machine. 
+                <li>If a menu bar popped up, then proceed to the next step. Otherwise, right click the app you want to deploy to the HoloLens and then click on properties->debug
+                <li>In Start options, make sure that the target device is remote machine and enter <span class="ipaddr"></span> into remote machine. Next, make the authentication mode universal (unencrypted protocol).
+                <li>Click on the green arrow to start deploying the application to the HoloLens.
+            </ol>
+        </div>
+        <a href="../tutorial.html">Back</a>
+    </body>
+</html>

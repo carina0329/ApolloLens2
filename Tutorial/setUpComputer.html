@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Setting up your computer for HoloLens</title>
+        <style>
+            h1, h2 {
+                text-decoration: cyan underline;
+                color: lime;
+            }
+            body {
+                background-color: black;
+                color: white;
+            }
+            a {
+                color: yellow;
+            }
+            a:hover {
+                color: cyan;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Setting up your computer for development</h1>
+        <p>Microsoft also has specific instructions for how to do it <a href="https://docs.microsoft.com/en-us/windows/mixed-reality/develop/platform-capabilities-and-apis/using-visual-studio?tabs=hl2#deploying-a-hololens-app-over-usb" target='blank'>here</a>.</p>
+        <p>You need to do a Windows computer to run this tutorial, as only Windows computers can run the Windows Application Projects that this project depends on.</p>
+        <div>
+            <h2>Installing Visual Studio</h2>
+            <p>The first step you need to do is installing Visual Studio for your computer. Keep in mind that you must do it in a Windows computer, as Apple computers do NOT have support for Windows Application Projects.</p>
+            <p><a href="https://visualstudio.microsoft.com/downloads/" target='blank'>Click on this link</a> and select the Community version for Windows computers.</p>
+            <p>Follow the steps for installing Visual Studio on your computer. When Visual Studio Installer asks about which modules to use in your program, <b> make sure to select Windows Application Projects for C++ and C# </b></p>
+        </div>
+        <div>
+            <h2>Installing Windows Application Project to Visual Studio (skip if you installed Visual Studio using the above steps)</h2>
+            <p>Note that you need Visual Studio 2019 or higher to connect to the HoloLens. If you do not have that, please <a href="https://visualstudio.microsoft.com/downloads/" target='blank'>install a higher version.</a></p>
+            <p>Download the <a href="https://visualstudio.microsoft.com/downloads/" target='blank'>Visual Studio installer</a> for the Community version for Windows computers.</p>
+            <p>Open the Visual Studio installer</p>
+            <p>Click on <strong>modify</strong> for the Visual Studio version that you want to install Windows Application projects on</p>
+            <p>Under the <strong>Desktop and Mobile</strong> category, click on <strong>Windows Windows Platform Development</strong></p>
+            <p>Click on <strong>Modify</strong> to install the module into your Visual Studio version</p>
+        </div>
+        <div>
+            <h2>Replacing the fo-dicom dll file</h2>
+            <p>The HoloLens runs on ARM, which is different from the x86 architecture your computer probably runs. Therefore, you need to change the debug settings from x86 to ARM.</p>
+            <p>To do this, you need to first find the <strong>.nuget</strong> folder in C:/Users/[Windows username]. </p>
+            <p>Navigate to .nuget/packages/fo-dicom.universal/4.0.x/runtimes</p>
+            <p>From here, go to <strong>win10-arm</strong>/lib/uap and copy the "Dicom.Core.dll" file</p>
+            <p>Paste the file into .nuget/packages/fo-dicom.universal/4.0.x/lib/uap and then select <strong>yes</strong> to replace the file already there.</p>
+            <p>Open Visual Studio and switch the deploy/debug settings from x86 to ARM (it should be on the menu right next to the green run button</p>
+            <p>In order to revert these changes, instead of copying the Dicom.Core.dll file in win10-arm, copy the Dicom.Core.dll file in win10-x86 into the library</p>
+        </div>
+        <a href="../tutorial.html">Back</a>
+    </body>
+</html>
