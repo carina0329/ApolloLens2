@@ -4,6 +4,8 @@
 (Target Version 10.0.17763.0)
 2. Must build using Visual Studio 2019
 
+## There is also a HTML version of this tutorial: open installation_tips.html on a web browser
+
 ## Deploying an App
 1. Select ‘Clean Solution’ under ‘Build’ menu after every update in code.
 2. Debug using x86 and the desired build target (remote machine, connected device, local machine).
