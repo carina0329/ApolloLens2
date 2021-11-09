@@ -9,10 +9,6 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="119*"/>
-            <ColumnDefinition Width="181*"/>
-        </Grid.ColumnDefinitions>
-
+        <MediaPlayerElement x:Name="localVideoPlayerElement" />
     </Grid>
 </Page>
