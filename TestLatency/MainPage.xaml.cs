@@ -64,6 +64,22 @@ namespace TestLatency
             };
             await peerConnection.InitializeAsync(config);
             Debugger.Log(0, "", "Peer connection initialized successfully.\n");
+            DeviceAudioTrackSource _microphoneSource;
+            DeviceVideoTrackSource _webcamSource;
+            LocalAudioTrack _localAudioTrack;
+            LocalVideoTrack _localVideoTrack;
+            _webcamSource = await DeviceVideoTrackSource.CreateAsync();
+            var videoTrackConfig = new LocalVideoTrackInitConfig
+            {
+                trackName = "webcam_track"
+            };
+            _localVideoTrack = LocalVideoTrack.CreateFromSource(_webcamSource, videoTrackConfig);
+            _microphoneSource = await DeviceAudioTrackSource.CreateAsync();
+            var audioTrackConfig = new LocalAudioTrackInitConfig
+            {
+                trackName = "microphone_track"
+            };
+            _localAudioTrack = LocalAudioTrack.CreateFromSource(_microphoneSource, audioTrackConfig);
         }
 
         private void App_Suspending(object sender, SuspendingEventArgs e)
