@@ -34,7 +34,7 @@ namespace TestLatency
     {
         private PeerConnection peerConnection;
         private MediaStreamSource _localVideoSource;
-        private VideoBridge _localVideoBridge = new VideoBridge(3);
+        private VideoBridge _localVideoBridge = new VideoBridge(1);
         private bool _localVideoPlaying = false;
         private object _localVideoLock = new object();
 
@@ -49,7 +49,7 @@ namespace TestLatency
         {
             // Request access to microphone and camera
             var settings = new MediaCaptureInitializationSettings();
-            settings.StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo;
+            settings.StreamingCaptureMode = StreamingCaptureMode.Video;
             var capture = new MediaCapture();
             await capture.InitializeAsync(settings);
 
@@ -73,23 +73,29 @@ namespace TestLatency
             };
             await peerConnection.InitializeAsync(config);
             Debugger.Log(0, "", "Peer connection initialized successfully.\n");
-            DeviceAudioTrackSource _microphoneSource;
-            DeviceVideoTrackSource _webcamSource;
-            LocalAudioTrack _localAudioTrack;
+            //DeviceAudioTrackSource _microphoneSource;
+            DeviceVideoTrackSource _webcamSource; 
+            //LocalAudioTrack _localAudioTrack;
             LocalVideoTrack _localVideoTrack;
-            _webcamSource = await DeviceVideoTrackSource.CreateAsync();
             var videoTrackConfig = new LocalVideoTrackInitConfig
             {
                 trackName = "webcam_track"
             };
-            _localVideoTrack = LocalVideoTrack.CreateFromSource(_webcamSource, videoTrackConfig);
-            _microphoneSource = await DeviceAudioTrackSource.CreateAsync();
-            var audioTrackConfig = new LocalAudioTrackInitConfig
+            LocalVideoDeviceInitConfig deviceInitConfig = new LocalVideoDeviceInitConfig
             {
-                trackName = "microphone_track"
+                enableMrc = false,
+                enableMrcRecordingIndicator = false,
+                width = 896,
+                framerate = 30
             };
-            _localAudioTrack = LocalAudioTrack.CreateFromSource(_microphoneSource, audioTrackConfig);
-            _webcamSource = await DeviceVideoTrackSource.CreateAsync();
+            _webcamSource = await DeviceVideoTrackSource.CreateAsync(deviceInitConfig);
+            _localVideoTrack = LocalVideoTrack.CreateFromSource(_webcamSource, videoTrackConfig);
+            //_microphoneSource = await DeviceAudioTrackSource.CreateAsync();
+            //var audioTrackConfig = new LocalAudioTrackInitConfig
+            //{
+            //trackName = "microphone_track"
+            // };
+            //_localAudioTrack = LocalAudioTrack.CreateFromSource(_microphoneSource, audioTrackConfig);
             _webcamSource.I420AVideoFrameReady += LocalI420AFrameReady;
         }
 
@@ -101,7 +107,7 @@ namespace TestLatency
                 peerConnection.Dispose();
                 peerConnection = null;
                 localVideoPlayerElement.SetMediaPlayer(null);
-            }
+            } 
         }
 
         private MediaStreamSource CreateI420VideoStreamSource(
