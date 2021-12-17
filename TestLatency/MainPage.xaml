@@ -10,5 +10,6 @@
 
     <Grid>
         <MediaPlayerElement x:Name="localVideoPlayerElement" />
+        <MediaPlayerElement x:Name="remoteVideoPlayerElement" />
     </Grid>
 </Page>

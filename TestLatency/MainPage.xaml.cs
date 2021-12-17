@@ -1,27 +1,17 @@
-﻿using System;
+﻿// new libraries
+using Microsoft.MixedReality.WebRTC;
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using System.Diagnostics;
+using TestLatency.Video;
+using Windows.ApplicationModel;
+using Windows.Media.Capture;
+using Windows.Media.Core;
+using Windows.Media.MediaProperties;
+using Windows.Media.Playback;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
-// new libraries
-using Microsoft.MixedReality.WebRTC;
-using System.Diagnostics;
-using Windows.Media.Capture;
-using Windows.ApplicationModel;
-using System.Collections.Generic;
-using TestLatency.Video;
-using Windows.Media.Core;
-using Windows.Media.Playback;
-using Windows.Media.MediaProperties;
+using TestLatency;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -37,6 +27,12 @@ namespace TestLatency
         private VideoBridge _localVideoBridge = new VideoBridge(1);
         private bool _localVideoPlaying = false;
         private object _localVideoLock = new object();
+        private NodeDssSignaler _signaler;
+        private object _remoteVideoLock = new object();
+        private bool _remoteVideoPlaying = false;
+        private MediaStreamSource _remoteVideoSource;
+        private VideoBridge _remoteVideoBridge = new VideoBridge(1);
+        private RemoteVideoTrack _remoteVideoTrack;
 
         public MainPage()
         {
@@ -66,15 +62,15 @@ namespace TestLatency
 
             peerConnection = new PeerConnection();
             var config = new PeerConnectionConfiguration
-                {
-                    IceServers = new List<IceServer> {
+            {
+                IceServers = new List<IceServer> {
                         new IceServer{ Urls = { "stun:stun.l.google.com:19302" } }
                 }
             };
             await peerConnection.InitializeAsync(config);
             Debugger.Log(0, "", "Peer connection initialized successfully.\n");
             //DeviceAudioTrackSource _microphoneSource;
-            DeviceVideoTrackSource _webcamSource; 
+            DeviceVideoTrackSource _webcamSource;
             //LocalAudioTrack _localAudioTrack;
             LocalVideoTrack _localVideoTrack;
             var videoTrackConfig = new LocalVideoTrackInitConfig
@@ -84,9 +80,7 @@ namespace TestLatency
             LocalVideoDeviceInitConfig deviceInitConfig = new LocalVideoDeviceInitConfig
             {
                 enableMrc = false,
-                enableMrcRecordingIndicator = false,
-                width = 896,
-                framerate = 30
+                enableMrcRecordingIndicator = false
             };
             _webcamSource = await DeviceVideoTrackSource.CreateAsync(deviceInitConfig);
             _localVideoTrack = LocalVideoTrack.CreateFromSource(_webcamSource, videoTrackConfig);
@@ -97,6 +91,50 @@ namespace TestLatency
             // };
             //_localAudioTrack = LocalAudioTrack.CreateFromSource(_microphoneSource, audioTrackConfig);
             _webcamSource.I420AVideoFrameReady += LocalI420AFrameReady;
+            peerConnection.LocalSdpReadytoSend += (SdpMessage message) =>
+            {
+                _signaler.SendMessageAsync(NodeDssSignaler.Message.FromSdpMessage(message));
+            };
+            peerConnection.IceCandidateReadytoSend += (IceCandidate iceCandidate) => {
+                _signaler.SendMessageAsync(NodeDssSignaler.Message.FromIceCandidate(iceCandidate));
+            };
+            // Initialize the signaler
+            _signaler = new NodeDssSignaler()
+            {
+                HttpServerAddress = "http://127.0.0.1:3000/",
+                LocalPeerId = "App1",
+                RemotePeerId = "<input the remote peer ID here>",
+            };
+            _signaler.OnMessage += async (NodeDssSignaler.Message msg) =>
+            {
+                switch (msg.MessageType)
+                {
+                    case NodeDssSignaler.Message.WireMessageType.Offer:
+                        // Wait for the offer to be applied
+                        await peerConnection.SetRemoteDescriptionAsync(msg.ToSdpMessage());
+                        // Once applied, create an answer
+                        peerConnection.CreateAnswer();
+                        break;
+
+                    case NodeDssSignaler.Message.WireMessageType.Answer:
+                        // No need to await this call; we have nothing to do after it
+                        peerConnection.SetRemoteDescriptionAsync(msg.ToSdpMessage());
+                        break;
+
+                    case NodeDssSignaler.Message.WireMessageType.Ice:
+                        peerConnection.AddIceCandidate(msg.ToIceCandidate());
+                        break;
+                }
+            };
+            _signaler.StartPollingAsync();
+            peerConnection.Connected += () => Debugger.Log(0, "", "PeerConnection established");
+            peerConnection.IceStateChanged += (IceConnectionState newState) => 
+                Debugger.Log(0, "", "ICE state: {newState}");
+            peerConnection.VideoTrackAdded += (RemoteVideoTrack track) => {
+                _remoteVideoTrack = track;
+                _remoteVideoTrack.I420AVideoFrameReady += RemoteVideo_I420AFrameReady;
+            };
+            peerConnection.CreateOffer();
         }
 
         private void App_Suspending(object sender, SuspendingEventArgs e)
@@ -107,7 +145,13 @@ namespace TestLatency
                 peerConnection.Dispose();
                 peerConnection = null;
                 localVideoPlayerElement.SetMediaPlayer(null);
-            } 
+            }
+            if (_signaler != null)
+            {
+                _signaler.StopPollingAsync();
+                _signaler = null;
+            }
+            remoteVideoPlayerElement.SetMediaPlayer(null);
         }
 
         private MediaStreamSource CreateI420VideoStreamSource(
@@ -144,6 +188,8 @@ namespace TestLatency
             VideoBridge videoBridge;
             if (sender == _localVideoSource)
                 videoBridge = _localVideoBridge;
+            else if (sender == _remoteVideoSource)
+                videoBridge = _remoteVideoBridge;
             else
                 return;
             videoBridge.TryServeVideoFrame(args);
@@ -179,6 +225,32 @@ namespace TestLatency
             // Enqueue the incoming frame into the video bridge; the media player will
             // later dequeue it as soon as it's ready.
             _localVideoBridge.HandleIncomingVideoFrame(frame);
+        }
+
+        private void RemoteVideo_I420AFrameReady(I420AVideoFrame frame)
+        {
+            lock (_remoteVideoLock)
+            {
+                if (!_remoteVideoPlaying)
+                {
+                    _remoteVideoPlaying = true;
+                    uint width = frame.width;
+                    uint height = frame.height;
+                    RunOnMainThread(() =>
+                    {
+                        // Bridge the remote video track with the remote media player UI
+                        int framerate = 30; // assumed, for lack of an actual value
+                        _remoteVideoSource = CreateI420VideoStreamSource(width, height,
+                            framerate);
+                        var remoteVideoPlayer = new MediaPlayer();
+                        remoteVideoPlayer.Source = MediaSource.CreateFromMediaStreamSource(
+                            _remoteVideoSource);
+                        remoteVideoPlayerElement.SetMediaPlayer(remoteVideoPlayer);
+                        remoteVideoPlayer.Play();
+                    });
+                }
+            }
+            _remoteVideoBridge.HandleIncomingVideoFrame(frame);
         }
 
         private void RunOnMainThread(Windows.UI.Core.DispatchedHandler handler)
